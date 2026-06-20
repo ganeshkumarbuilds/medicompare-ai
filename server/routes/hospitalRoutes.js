@@ -6,6 +6,7 @@ import {
   getHospitalById,
   updateHospital,
   deleteHospital,
+  nearbyHospitals
 } from "../controllers/hospitalController.js";
 
 const router = express.Router();
@@ -13,6 +14,8 @@ const router = express.Router();
 router.post("/", createHospital);
 
 router.get("/", getHospitals);
+
+router.get("/nearby/search", nearbyHospitals);
 
 router.get("/:id", getHospitalById);
 

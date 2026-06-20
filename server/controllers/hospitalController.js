@@ -1,4 +1,5 @@
 import Hospital from "../models/Hospital.js";
+import { calculateDistance } from "../utils/distance.js";
 
 // Create Hospital
 export const createHospital = async (req, res) => {
@@ -81,6 +82,38 @@ export const deleteHospital = async (req, res) => {
     res.status(200).json({
       message: "Hospital deleted",
     });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const nearbyHospitals = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.query;
+
+    const hospitals = await Hospital.find();
+
+    const results = hospitals.map((hospital) => {
+      const distance = calculateDistance(
+  Number(latitude),
+  Number(longitude),
+  hospital.latitude,
+  hospital.longitude
+);
+
+      return {
+        ...hospital.toObject(),
+        distance,
+      };
+    });
+
+    results.sort(
+      (a, b) => a.distance - b.distance
+    );
+
+    res.status(200).json(results);
   } catch (error) {
     res.status(500).json({
       message: error.message,
