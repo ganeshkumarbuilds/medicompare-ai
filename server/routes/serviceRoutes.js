@@ -4,17 +4,20 @@ import {
   createService,
   getServices,
   searchServices,
-  getServiceById,compareServices
+  getServiceById,
+  compareServices,
 } from "../controllers/serviceController.js";
 
 const router = express.Router();
 
-router.post("/", createService);
-
 router.get("/", getServices);
-router.get("/search/service", searchServices);
+
+router.get("/search", searchServices);
+
 router.get("/compare", compareServices);
 
 router.get("/:id", getServiceById);
+
+router.post("/", createService);
 
 export default router;

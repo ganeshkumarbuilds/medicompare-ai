@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Register() {
+  const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,13 +12,30 @@ function Register() {
   const register = async (e) => {
     e.preventDefault();
 
-    console.log({
-      name,
-      email,
-      password,
-    });
+    try {
+      const { data } = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        {
+          name,
+          email,
+          password,
+        }
+      );
 
-    // API call later
+      console.log(data);
+
+    localStorage.setItem(
+  "userId",
+  data.userId
+);
+
+      alert("Registration Successful");
+
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+      alert("Registration Failed");
+    }
   };
 
   return (
@@ -31,67 +51,55 @@ function Register() {
             </h1>
 
             <p className="text-gray-500 mt-2">
-              Join MediCompare AI today
+              Join MediCompare AI
             </p>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
-
             <input
               type="text"
-              placeholder="Enter your full name"
+              placeholder="Full Name"
               value={name}
               onChange={(e) =>
                 setName(e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl"
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="Email"
               value={email}
               onChange={(e) =>
                 setEmail(e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl"
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-
             <input
               type="password"
-              placeholder="Create a password"
+              placeholder="Password"
               value={password}
               onChange={(e) =>
                 setPassword(e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition"
+            className="w-full bg-green-600 text-white py-3 rounded-xl"
           >
-            Create Account
+            Register
           </button>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p>
               Already have an account?{" "}
               <Link
                 to="/login"

@@ -1,19 +1,39 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const login = async (e) => {
     e.preventDefault();
 
-    console.log({
-      email,
-      password,
-    });
+    try {
+      const { data } = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password,
+        }
+      );
 
-    // API call later
+      console.log(data);
+
+      localStorage.setItem(
+  "userId",
+  data.userId
+);
+
+      alert("Login Successful");
+
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+      alert("Login Failed");
+    }
   };
 
   return (
@@ -45,7 +65,7 @@ function Login() {
               onChange={(e) =>
                 setEmail(e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl"
             />
           </div>
 
@@ -61,19 +81,19 @@ function Login() {
               onChange={(e) =>
                 setPassword(e.target.value)
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition"
+            className="w-full bg-blue-600 text-white py-3 rounded-xl"
           >
             Login
           </button>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p>
               Don't have an account?{" "}
               <Link
                 to="/register"

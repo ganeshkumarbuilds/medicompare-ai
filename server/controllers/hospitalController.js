@@ -1,5 +1,7 @@
 import Hospital from "../models/Hospital.js";
 import { calculateDistance } from "../utils/distance.js";
+import Service from "../models/Service.js";
+import Review from "../models/Review.js";
 
 // Create Hospital
 export const createHospital = async (req, res) => {
@@ -114,6 +116,79 @@ export const nearbyHospitals = async (req, res) => {
     );
 
     res.status(200).json(results);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+export const compareHospitals = async (
+  req,
+  res
+) => {
+  try {
+    const { hospital1, hospital2 } =
+      req.query;
+
+    const firstHospital =
+      await Hospital.findById(
+        hospital1
+      );
+
+    const secondHospital =
+      await Hospital.findById(
+        hospital2
+      );
+
+    if (
+      !firstHospital ||
+      !secondHospital
+    ) {
+      return res.status(404).json({
+        message:
+          "Hospital not found",
+      });
+    }
+
+    const firstServices =
+      await Service.countDocuments({
+        hospitalId: hospital1,
+      });
+
+    const secondServices =
+      await Service.countDocuments({
+        hospitalId: hospital2,
+      });
+
+    const firstReviews =
+      await Review.countDocuments({
+        hospitalId: hospital1,
+      });
+
+    const secondReviews =
+      await Review.countDocuments({
+        hospitalId: hospital2,
+      });
+
+    res.status(200).json({
+      hospital1: {
+        ...firstHospital.toObject(),
+        servicesCount:
+          firstServices,
+        reviewsCount:
+          firstReviews,
+      },
+
+      hospital2: {
+        ...secondHospital.toObject(),
+        servicesCount:
+          secondServices,
+        reviewsCount:
+          secondReviews,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       message: error.message,
