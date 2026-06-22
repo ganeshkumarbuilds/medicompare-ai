@@ -2,6 +2,7 @@ import axios from "axios";
 import Service from "../models/Service.js";
 import { calculateDistance } from "../utils/distance.js";
 import Review from "../models/Review.js";
+import Hospital from "../models/Hospital.js";
 
 
 export const askAI = async (req, res) => {
