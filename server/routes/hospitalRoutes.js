@@ -18,7 +18,7 @@ router.get("/", getHospitals);
 
 router.get("/nearby/search", nearbyHospitals);
 
-router.get("/compare", compareHospitals);
+router.get("/compare", compareHospitals); 
 
 router.get("/:id", getHospitalById);
 

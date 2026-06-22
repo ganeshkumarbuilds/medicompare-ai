@@ -66,7 +66,7 @@ function BookAppointment() {
 
       <button
         onClick={handleBooking}
-        className="bg-green-600 text-white px-5 py-3 rounded-lg"
+        className="bg-green-600 text-white px-5 py-3 cursor-pointer rounded-lg"
       >
         Confirm Booking
       </button>

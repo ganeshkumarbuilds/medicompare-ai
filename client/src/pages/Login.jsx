@@ -23,8 +23,13 @@ function Login() {
       console.log(data);
 
       localStorage.setItem(
-  "userId",
-  data.userId
+  "token",
+  data.token
+);
+
+localStorage.setItem(
+  "user",
+  JSON.stringify(data.user)
 );
 
       alert("Login Successful");
@@ -87,7 +92,7 @@ function Login() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-xl"
+            className="w-full bg-blue-600 text-white py-3 cursor-pointer rounded-xl"
           >
             Login
           </button>
@@ -97,7 +102,7 @@ function Login() {
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="text-blue-600 font-semibold"
+                className="text-blue-600 cursor-pointer font-semibold"
               >
                 Register
               </Link>

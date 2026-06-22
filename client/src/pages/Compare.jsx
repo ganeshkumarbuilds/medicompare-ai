@@ -35,6 +35,24 @@ function Compare() {
       alert("Comparison failed");
     }
   };
+  let recommendedHospital = null;
+
+if (comparison) {
+  const score1 =
+    comparison.hospital1.rating * 10 +
+    comparison.hospital1.servicesCount +
+    comparison.hospital1.reviewsCount;
+
+  const score2 =
+    comparison.hospital2.rating * 10 +
+    comparison.hospital2.servicesCount +
+    comparison.hospital2.reviewsCount;
+
+  recommendedHospital =
+    score1 > score2
+      ? comparison.hospital1
+      : comparison.hospital2;
+}
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
@@ -91,7 +109,7 @@ function Compare() {
 
       <button
         onClick={compareHospitals}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+        className="bg-blue-600 text-white px-6 py-3 cursor-pointer rounded-lg"
       >
         Compare
       </button>
@@ -190,6 +208,25 @@ function Compare() {
             </tbody>
 
           </table>
+          {recommendedHospital && (
+  <div className="mt-8 bg-green-50 border border-green-300 rounded-xl p-6">
+    <h2 className="text-2xl font-bold text-green-700">
+      🏆 AI Recommendation
+    </h2>
+
+    <p className="mt-3 text-lg">
+      Recommended Hospital:
+      <span className="font-bold">
+        {" "}
+        {recommendedHospital.name}
+      </span>
+    </p>
+
+    <p className="mt-2 text-gray-700">
+      Based on rating, services, and reviews.
+    </p>
+  </div>
+)}
 
         </div>
       )}

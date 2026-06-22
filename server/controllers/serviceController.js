@@ -2,6 +2,9 @@ import Service from "../models/Service.js";
 
 export const createService = async (req, res) => {
   try {
+    console.log("Incoming Service Data:");
+    console.log(req.body);
+
     const service = await Service.create(req.body);
 
     res.status(201).json({
@@ -9,6 +12,9 @@ export const createService = async (req, res) => {
       service,
     });
   } catch (error) {
+    console.log("SERVICE ERROR:");
+    console.log(error);
+
     res.status(500).json({
       message: error.message,
     });

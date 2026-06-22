@@ -61,6 +61,78 @@ function AddService() {
     }
   };
 
+  const generateDefaultServices = async () => {
+    if (!formData.hospitalId) {
+      alert("Please select a hospital first");
+      return;
+    }
+
+    const defaultServices = [
+      {
+        serviceName: "MRI Scan",
+        category: "Radiology",
+        price: 4500,
+        duration: 60,
+        description:
+          "Magnetic Resonance Imaging scan",
+      },
+      {
+        serviceName: "CT Scan",
+        category: "Radiology",
+        price: 3500,
+        duration: 45,
+        description:
+          "Computed Tomography scan",
+      },
+      {
+        serviceName: "Blood Test",
+        category: "Pathology",
+        price: 500,
+        duration: 20,
+        description:
+          "Complete blood examination",
+      },
+      {
+        serviceName: "X-Ray",
+        category: "Radiology",
+        price: 800,
+        duration: 15,
+        description:
+          "Digital X-Ray imaging",
+      },
+      {
+        serviceName: "Heart Checkup",
+        category: "Cardiology",
+        price: 3000,
+        duration: 60,
+        description:
+          "Comprehensive cardiac evaluation",
+      },
+    ];
+
+    try {
+      for (const service of defaultServices) {
+        await axios.post(
+          "http://localhost:5000/api/services",
+          {
+            hospitalId:
+              formData.hospitalId,
+            ...service,
+          }
+        );
+      }
+
+      alert(
+        "5 Default Services Added Successfully"
+      );
+    } catch (error) {
+      console.log(error);
+      alert(
+        "Failed to generate services"
+      );
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto py-10 px-6">
 
@@ -92,6 +164,14 @@ function AddService() {
             </option>
           ))}
         </select>
+
+        <button
+          type="button"
+          onClick={generateDefaultServices}
+          className="w-full bg-purple-600 text-white py-3 cursor-pointer rounded-lg font-semibold"
+        >
+          ⚡ Generate 5 Default Services
+        </button>
 
         <input
           type="text"
@@ -140,7 +220,7 @@ function AddService() {
 
         <button
           type="submit"
-          className="bg-green-600 text-white px-6 py-3 rounded-lg"
+          className="bg-green-600 text-white px-6 py-3 cursor-pointer rounded-lg"
         >
           Add Service
         </button>

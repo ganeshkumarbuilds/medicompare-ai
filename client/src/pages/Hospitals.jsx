@@ -63,7 +63,7 @@ function Hospitals() {
             <div className="mt-4">
               <Link
   to={`/hospitals/${hospital._id}`}
-  className="bg-blue-600 text-white px-4 py-2 rounded-lg inline-block"
+  className="bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block"
 >
   View Details
 </Link>

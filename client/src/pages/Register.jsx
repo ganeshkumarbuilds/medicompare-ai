@@ -93,7 +93,7 @@ function Register() {
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded-xl"
+            className="w-full bg-green-600 text-white py-3 cursor-pointer rounded-xl"
           >
             Register
           </button>
@@ -103,7 +103,7 @@ function Register() {
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-green-600 font-semibold"
+                className="text-green-600 cursor-pointer font-semibold"
               >
                 Login
               </Link>

@@ -41,7 +41,7 @@ const NearbyHospitals = () => {
 
       <button
         onClick={findNearbyHospitals}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+        className="bg-blue-600 text-white px-6 py-3 cursor-pointer rounded-lg"
       >
         📍 Find Nearby Hospitals
       </button>
