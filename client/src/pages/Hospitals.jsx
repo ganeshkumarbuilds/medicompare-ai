@@ -17,7 +17,7 @@ function Hospitals() {
   const fetchHospitals = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/hospitals"
+        `${import.meta.env.VITE_API_URL}/api/hospitals`
       );
 
       setHospitals(data);

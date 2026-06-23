@@ -23,7 +23,7 @@ function AddHospital() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/hospitals",
+        "https://medicompare-backend-voou.onrender.com",
         formData
       );
 

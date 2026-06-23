@@ -21,7 +21,7 @@ function Bookings() {
   const fetchBookings = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/bookings"
+        `${import.meta.env.VITE_API_URL}/api/bookings`
       );
 
       const userBookings =
@@ -41,7 +41,7 @@ function Bookings() {
   const cancelBooking = async (id) => {
   try {
     await axios.delete(
-      `http://localhost:5000/api/bookings/${id}`
+      `${import.meta.env.VITE_API_URL}/api/bookings/${id}`
     );
 
     alert("Booking cancelled");

@@ -30,7 +30,7 @@ const [comment, setComment] = useState("");
   const fetchHospital = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5000/api/hospitals/${id}`
+        `${import.meta.env.VITE_API_URL}/api/hospitals/${id}`
       );
 
       setHospital(data);
@@ -42,7 +42,7 @@ const [comment, setComment] = useState("");
   const fetchServices = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/services"
+        `${import.meta.env.VITE_API_URL}/api/services`
       );
 
       const hospitalServices =
@@ -61,7 +61,7 @@ const [comment, setComment] = useState("");
   const fetchReviews = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5000/api/reviews/hospital/${id}`
+        `${import.meta.env.VITE_API_URL}/api/reviews/hospital/${id}`
       );
 
       setReviews(data);
@@ -73,7 +73,7 @@ const [comment, setComment] = useState("");
   const fetchRatingData = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5000/api/reviews/hospital/${id}/rating`
+        `${import.meta.env.VITE_API_URL}/api/reviews/hospital/${id}/rating`
       );
 
       setAverageRating(
@@ -102,7 +102,7 @@ const [comment, setComment] = useState("");
       }
 
       await axios.post(
-        "http://localhost:5000/api/reviews",
+        `${import.meta.env.VITE_API_URL}/api/reviews`,
         {
           userId: user._id,
           hospitalId: id,
@@ -139,7 +139,7 @@ const [comment, setComment] = useState("");
 
           const response =
             await axios.get(
-              `http://localhost:5000/api/hospitals/nearby/search?latitude=${lat}&longitude=${lng}`
+              `${import.meta.env.VITE_API_URL}/api/hospitals/nearby/search?latitude=${lat}&longitude=${lng}`
             );
 
           const currentHospital =
@@ -170,7 +170,7 @@ const [comment, setComment] = useState("");
 
         const { data } =
           await axios.post(
-            `http://localhost:5000/api/ai/review-summary/${id}`
+            `${import.meta.env.VITE_API_URL}/api/ai/review-summary/${id}`
           );
 
         setSummary(
@@ -200,7 +200,7 @@ const [comment, setComment] = useState("");
     }
 
     await axios.post(
-      "http://localhost:5000/api/reviews",
+      `${import.meta.env.VITE_API_URL}/api/reviews`,
       {
         userId: user._id,
         hospitalId: id,

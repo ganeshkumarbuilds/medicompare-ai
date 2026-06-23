@@ -15,7 +15,7 @@ const NearbyHospitals = () => {
           const longitude = position.coords.longitude;
 
           const { data } = await axios.get(
-            `http://localhost:5000/api/hospitals/nearby/search?latitude=${latitude}&longitude=${longitude}`
+            `${import.meta.env.VITE_API_URL}/api/hospitals/nearby/search?latitude=${latitude}&longitude=${longitude}`
           );
 
           setHospitals(data);

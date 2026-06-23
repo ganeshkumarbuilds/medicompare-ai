@@ -13,7 +13,7 @@ function ManageHospitals() {
   const fetchHospitals = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/hospitals"
+        `${import.meta.env.VITE_API_URL}/api/hospitals`
       );
 
       setHospitals(data);
@@ -31,7 +31,7 @@ function ManageHospitals() {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/hospitals/${id}`
+        `${import.meta.env.VITE_API_URL}/api/hospitals/${id}`
       );
 
       fetchHospitals();

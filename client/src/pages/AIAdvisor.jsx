@@ -43,7 +43,7 @@ function AIAdvisor() {
       setLoading(true);
 
       const { data } = await axios.post(
-        "http://localhost:5000/api/ai/recommend",
+        `${import.meta.env.VITE_API_URL}/api/ai/recommend`,
         {
           treatment,
           budget,

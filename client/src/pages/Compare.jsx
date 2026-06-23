@@ -14,7 +14,7 @@ function Compare() {
   const fetchHospitals = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/hospitals"
+        `${import.meta.env.VITE_API_URL}/api/hospitals`
       );
 
       setHospitals(data);
@@ -26,7 +26,7 @@ function Compare() {
   const compareHospitals = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5000/api/hospitals/compare?hospital1=${hospital1}&hospital2=${hospital2}`
+        `${import.meta.env.VITE_API_URL}/api/hospitals/compare?hospital1=${hospital1}&hospital2=${hospital2}`
       );
 
       setComparison(data);

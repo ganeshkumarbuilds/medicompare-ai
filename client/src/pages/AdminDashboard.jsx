@@ -63,7 +63,7 @@ const completedBookings =
   const fetchStats = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/admin/stats"
+        `${import.meta.env.VITE_API_URL}/api/admin/stats`
       );
 
       setStats(data);
@@ -75,7 +75,7 @@ const completedBookings =
   const fetchRatings = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/admin/hospital-ratings"
+        `${import.meta.env.VITE_API_URL}/api/admin/hospital-ratings`
       );
 
       setRatingData(data);
@@ -86,7 +86,7 @@ const completedBookings =
   const fetchRecentBookings = async () => {
   try {
     const { data } = await axios.get(
-      "http://localhost:5000/api/admin/recent-bookings"
+      `${import.meta.env.VITE_API_URL}/api/admin/recent-bookings`
     );
 
     setRecentBookings(data);
@@ -100,7 +100,7 @@ const updateStatus = async (
 ) => {
   try {
     await axios.put(
-      `http://localhost:5000/api/bookings/${bookingId}/status`,
+      `${import.meta.env.VITE_API_URL}/api/bookings/${bookingId}/status`,
       { status }
     );
 

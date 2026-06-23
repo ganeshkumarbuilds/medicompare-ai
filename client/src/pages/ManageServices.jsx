@@ -13,7 +13,7 @@ function ManageServices() {
   const fetchServices = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/services"
+        `${import.meta.env.VITE_API_URL}/api/services`
       );
 
       setServices(data);
@@ -25,7 +25,7 @@ function ManageServices() {
   const deleteService = async (id) => {
   try {
     await axios.delete(
-      `http://localhost:5000/api/services/${id}`
+      `${import.meta.env.VITE_API_URL}/api/services/${id}`
     );
 
     alert("Service deleted");

@@ -20,7 +20,7 @@ function AddService() {
   const fetchHospitals = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/hospitals"
+        `${import.meta.env.VITE_API_URL}/api/hospitals`
       );
 
       setHospitals(data);
@@ -41,7 +41,7 @@ function AddService() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/services",
+        `${import.meta.env.VITE_API_URL}/api/services`,
         formData
       );
 
@@ -113,7 +113,7 @@ function AddService() {
     try {
       for (const service of defaultServices) {
         await axios.post(
-          "http://localhost:5000/api/services",
+          `${import.meta.env.VITE_API_URL}/api/services`,
           {
             hospitalId:
               formData.hospitalId,

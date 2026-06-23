@@ -36,7 +36,7 @@ function AIChat() {
       setLoading(true);
 
       const { data } = await axios.post(
-        "http://localhost:5000/api/ai/ask",
+        `${import.meta.env.VITE_API_URL}/api/ai/ask`,
         {
           prompt: currentQuestion,
         }
