@@ -69,26 +69,22 @@ export const deleteBooking = async (req, res) => {
   }
 };
 
-export const updateBookingStatus = async (req, res) => {
-  try {
-    const booking =
-      await Booking.findByIdAndUpdate(
-        req.params.id,
-        {
-          status: req.body.status,
-        },
-        {
-          new: true,
-        }
-      );
+export const updateBookingStatus =
+  async (req, res) => {
+    try {
+      const { status } = req.body;
 
-    res.status(200).json({
-      message: "Booking updated",
-      booking,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
+      const booking =
+        await Booking.findByIdAndUpdate(
+          req.params.id,
+          { status },
+          { returnDocument: "after", }
+        );
+
+      res.status(200).json(booking);
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  };

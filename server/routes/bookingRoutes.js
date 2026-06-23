@@ -14,7 +14,7 @@ router.post("/", createBooking);
 router.get("/", getBookings);
 
 router.get("/:id", getBookingById);
-router.put("/:id", updateBookingStatus);
+router.put("/:id/status", updateBookingStatus);
 
 router.delete("/:id", deleteBooking);
 

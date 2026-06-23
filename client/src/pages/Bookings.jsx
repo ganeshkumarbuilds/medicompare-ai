@@ -38,6 +38,20 @@ function Bookings() {
       setLoading(false);
     }
   };
+  const cancelBooking = async (id) => {
+  try {
+    await axios.delete(
+      `http://localhost:5000/api/bookings/${id}`
+    );
+
+    alert("Booking cancelled");
+
+    fetchBookings();
+  } catch (error) {
+    console.log(error);
+    alert("Failed to cancel booking");
+  }
+};
 
   if (loading) {
     return (
@@ -115,25 +129,32 @@ function Bookings() {
 
                     </div>
 
-                    <div>
+                    <div className="flex flex-col items-end gap-3">
 
-                      <span
-                        className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                          booking.status ===
-                          "Approved"
-                            ? "bg-green-100 text-green-700"
-                            : booking.status ===
-                              "Rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {
-                          booking.status
-                        }
-                      </span>
+  <span
+    className={`px-4 py-2 rounded-full text-sm font-semibold ${
+      booking.status === "Approved"
+        ? "bg-green-100 text-green-700"
+        : booking.status === "Rejected"
+        ? "bg-red-100 text-red-700"
+        : "bg-yellow-100 text-yellow-700"
+    }`}
+  >
+    {booking.status}
+  </span>
 
-                    </div>
+  {booking.status === "pending" && (
+    <button
+      onClick={() =>
+        cancelBooking(booking._id)
+      }
+      className="bg-red-600 text-white px-4 py-2 cursor-pointer rounded-lg hover:bg-red-700"
+    >
+      Cancel
+    </button>
+  )}
+
+</div>
 
                   </div>
 

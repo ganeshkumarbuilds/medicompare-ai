@@ -5,7 +5,7 @@ import {
   getServices,
   searchServices,
   getServiceById,
-  compareServices,
+  compareServices,deleteService
 } from "../controllers/serviceController.js";
 
 const router = express.Router();
@@ -19,5 +19,6 @@ router.get("/compare", compareServices);
 router.get("/:id", getServiceById);
 
 router.post("/", createService);
+router.delete("/:id", deleteService);
 
 export default router;

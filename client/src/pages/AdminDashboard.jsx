@@ -25,6 +25,34 @@ function AdminDashboard() {
 
   const [ratingData, setRatingData] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
+  const [bookings, setBookings] =
+  useState([]);
+  const totalBookings =
+  recentBookings.length;
+
+const pendingBookings =
+  recentBookings.filter(
+    (b) => b.status === "pending"
+  ).length;
+
+const confirmedBookings =
+  recentBookings.filter(
+    (b) =>
+      b.status === "confirmed" ||
+      b.status === "Approved"
+  ).length;
+
+const cancelledBookings =
+  recentBookings.filter(
+    (b) =>
+      b.status === "cancelled" ||
+      b.status === "Rejected"
+  ).length;
+
+const completedBookings =
+  recentBookings.filter(
+    (b) => b.status === "completed"
+  ).length;
 
   useEffect(() => {
     fetchStats();
@@ -66,6 +94,21 @@ function AdminDashboard() {
     console.log(error);
   }
 };
+const updateStatus = async (
+  bookingId,
+  status
+) => {
+  try {
+    await axios.put(
+      `http://localhost:5000/api/bookings/${bookingId}/status`,
+      { status }
+    );
+
+    fetchRecentBookings();
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   const overviewData = [
     {
@@ -86,12 +129,6 @@ function AdminDashboard() {
     },
   ];
 
-  const COLORS = [
-    "#2563eb",
-    "#16a34a",
-    "#f97316",
-    "#a21caf",
-  ];
   const generateServices = async () => {
   try {
     const { data } = await axios.post(
@@ -108,6 +145,33 @@ function AdminDashboard() {
     alert("Failed to generate services");
   }
 };
+const chartData = [
+  {
+    name: "Pending",
+    value: pendingBookings,
+  },
+  {
+    name: "Confirmed",
+    value: confirmedBookings,
+  },
+  {
+    name: "Cancelled",
+    value: cancelledBookings,
+  },
+  {
+    name: "Completed",
+    value: completedBookings,
+  },
+];
+
+const COLORS = [
+  "#facc15",
+  "#22c55e",
+  "#ef4444",
+  "#3b82f6",
+];
+console.log(bookings);
+console.log(bookings.length);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -347,6 +411,13 @@ function AdminDashboard() {
             <th className="text-left py-3">
               Date
             </th>
+            <th className="text-left py-3">
+  Status
+</th>
+
+<th className="text-left py-3">
+  Actions
+</th>
 
           </tr>
 
@@ -378,6 +449,57 @@ function AdminDashboard() {
                     booking.createdAt
                   ).toLocaleDateString()}
                 </td>
+                <td className="py-3">
+  {booking.status}
+</td>
+<td className="py-3">
+
+  {booking.status === "pending" ? (
+
+    <div className="flex gap-2">
+
+      <button
+        onClick={() =>
+          updateStatus(
+            booking._id,
+            "Approved"
+          )
+        }
+        className="bg-green-600 text-white px-3 py-1 cursor-pointer rounded hover:bg-green-700"
+      >
+        Approve
+      </button>
+
+      <button
+        onClick={() =>
+          updateStatus(
+            booking._id,
+            "Rejected"
+          )
+        }
+        className="bg-red-600 text-white px-3 py-1 cursor-pointer rounded hover:bg-red-700"
+      >
+        Reject
+      </button>
+
+    </div>
+
+  ) : (
+
+    <span
+      className={`px-3 py-2 rounded-full text-sm font-semibold ${
+        booking.status === "Approved"
+          ? "bg-green-100 text-green-700"
+          : "bg-red-100 text-red-700"
+      }`}
+    >
+      {booking.status}
+    </span>
+
+  )}
+
+</td>
+
 
               </tr>
             )
@@ -389,6 +511,93 @@ function AdminDashboard() {
 
     </div>
   )}
+
+</div>
+<div className="grid md:grid-cols-5 gap-4 mb-8">
+
+  <div className="bg-white rounded-2xl shadow p-5">
+    <h3 className="text-gray-500">
+      Total
+    </h3>
+
+    <p className="text-3xl font-bold">
+      {totalBookings}
+    </p>
+  </div>
+
+  <div className="bg-yellow-50 rounded-2xl shadow p-5">
+    <h3 className="text-yellow-700">
+      Pending
+    </h3>
+
+    <p className="text-3xl font-bold">
+      {pendingBookings}
+    </p>
+  </div>
+
+  <div className="bg-green-50 rounded-2xl shadow p-5">
+    <h3 className="text-green-700">
+      Confirmed
+    </h3>
+
+    <p className="text-3xl font-bold">
+      {confirmedBookings}
+    </p>
+  </div>
+
+  <div className="bg-red-50 rounded-2xl shadow p-5">
+    <h3 className="text-red-700">
+      Cancelled
+    </h3>
+
+    <p className="text-3xl font-bold">
+      {cancelledBookings}
+    </p>
+  </div>
+
+  <div className="bg-blue-50 rounded-2xl shadow p-5">
+    <h3 className="text-blue-700">
+      Completed
+    </h3>
+
+    <p className="text-3xl font-bold">
+      {completedBookings}
+    </p>
+  </div>
+
+</div>
+
+<div className="bg-white rounded-2xl shadow p-6 mb-8">
+
+  <h2 className="text-2xl font-bold mb-4">
+    Booking Status Overview
+  </h2>
+
+  <PieChart
+    width={500}
+    height={300}
+  >
+    <Pie
+      data={chartData}
+      cx="50%"
+      cy="50%"
+      outerRadius={100}
+      dataKey="value"
+      label
+    >
+      {chartData.map(
+        (entry, index) => (
+          <Cell
+            key={index}
+            fill={COLORS[index]}
+          />
+        )
+      )}
+    </Pie>
+
+    <Tooltip />
+    <Legend />
+  </PieChart>
 
 </div>
 

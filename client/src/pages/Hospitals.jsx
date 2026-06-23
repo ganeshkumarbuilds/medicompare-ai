@@ -4,22 +4,15 @@ import { Link } from "react-router-dom";
 
 function Hospitals() {
   const [hospitals, setHospitals] = useState([]);
-  const [filteredHospitals, setFilteredHospitals] =
-    useState([]);
-
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] =
-    useState("rating");
+  const [city, setCity] = useState("");
+  const [sort, setSort] = useState("rating");
 
   useEffect(() => {
     fetchHospitals();
   }, []);
-
-  useEffect(() => {
-    filterHospitals();
-  }, [search, sortBy, hospitals]);
 
   const fetchHospitals = async () => {
     try {
@@ -28,7 +21,6 @@ function Hospitals() {
       );
 
       setHospitals(data);
-      setFilteredHospitals(data);
     } catch (error) {
       console.log(error);
     } finally {
@@ -36,41 +28,34 @@ function Hospitals() {
     }
   };
 
-  const filterHospitals = () => {
-    let filtered = [...hospitals];
+  const cities = [
+    ...new Set(
+      hospitals
+        .map((hospital) => hospital.city)
+        .filter(Boolean)
+    ),
+  ];
 
-    if (search) {
-      filtered = filtered.filter(
-        (hospital) =>
-          hospital.name
-            .toLowerCase()
-            .includes(
-              search.toLowerCase()
-            ) ||
-          hospital.city
-            ?.toLowerCase()
-            .includes(
-              search.toLowerCase()
-            )
-      );
-    }
+  const filteredHospitals = hospitals
+    .filter((hospital) =>
+      hospital.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+    )
+    .filter((hospital) =>
+      city ? hospital.city === city : true
+    )
+    .sort((a, b) => {
+      if (sort === "rating") {
+        return (b.rating || 0) - (a.rating || 0);
+      }
 
-    if (sortBy === "rating") {
-      filtered.sort(
-        (a, b) =>
-          (b.rating || 0) -
-          (a.rating || 0)
-      );
-    }
+      if (sort === "name") {
+        return a.name.localeCompare(b.name);
+      }
 
-    if (sortBy === "name") {
-      filtered.sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
-    }
-
-    setFilteredHospitals(filtered);
-  };
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -100,35 +85,59 @@ function Hospitals() {
 
         </div>
 
-        {/* Search + Sort */}
+        {/* Search + Filter + Sort */}
 
-        <div className="bg-white rounded-2xl shadow-md p-5 mb-8 flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-2xl shadow-md p-5 mb-8 grid md:grid-cols-3 gap-4">
 
           <input
             type="text"
-            placeholder="Search hospital or city..."
+            placeholder="🔍 Search Hospital"
             value={search}
             onChange={(e) =>
               setSearch(e.target.value)
             }
-            className="flex-1 border rounded-xl p-3"
+            className="border rounded-xl p-3"
           />
 
           <select
-            value={sortBy}
+            value={city}
             onChange={(e) =>
-              setSortBy(e.target.value)
+              setCity(e.target.value)
             }
             className="border rounded-xl p-3"
           >
+            <option value="">
+              All Cities
+            </option>
+
+            {cities.map((cityName) => (
+              <option
+                key={cityName}
+                value={cityName}
+              >
+                {cityName}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sort}
+            onChange={(e) =>
+              setSort(e.target.value)
+            }
+            className="border rounded-xl p-3"
+          >
+            <option value="">
+              Sort
+            </option>
+
             <option value="rating">
-              Sort By Rating
+              Highest Rating
             </option>
 
             <option value="name">
-              Sort By Name
+              A-Z
             </option>
-
           </select>
 
         </div>
@@ -174,12 +183,35 @@ function Hospitals() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
 
           {filteredHospitals.map(
-            (hospital) => (
+            (hospital, index) => (
               <div
-                key={hospital._id}
-                className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition duration-300"
-              >
+  key={hospital._id}
+  className="relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition duration-300"
 
+>{index === 0 && (
+  <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold z-10">
+    🥇 Rank #1
+  </div>
+)}
+
+{index === 1 && (
+  <div className="absolute top-4 left-4 bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-bold z-10">
+    🥈 Rank #2
+  </div>
+)}
+
+{index === 2 && (
+  <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold z-10">
+    🥉 Rank #3
+  </div>
+)}
+
+{index > 2 && hospital.rating >= 4.5 && (
+  <div className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold z-10">
+    ⭐ Top Rated
+  </div>
+)}
+  
                 <img
                   src={
                     hospital.image ||
@@ -198,7 +230,7 @@ function Hospitals() {
                     </h2>
 
                     <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold">
-                      ⭐ {hospital.rating}
+                      ⭐ {hospital.rating || 0}
                     </span>
 
                   </div>
@@ -217,7 +249,7 @@ function Hospitals() {
 
                   <Link
                     to={`/hospitals/${hospital._id}`}
-                    className="mt-6 block text-center bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700"
+                    className="mt-6 block text-center bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
                   >
                     View Details
                   </Link>

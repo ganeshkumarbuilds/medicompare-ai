@@ -2,27 +2,30 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+
 function HospitalDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
-  const [hospital, setHospital] = useState(null);
-  const [services, setServices] = useState([]);
-  const [distance, setDistance] = useState(null);
+const [hospital, setHospital] = useState(null);
+const [services, setServices] = useState([]);
+const [distance, setDistance] = useState(null);
 
-  const [summary, setSummary] = useState("");
-  const [loadingSummary, setLoadingSummary] =
-    useState(false);
+const [summary, setSummary] = useState("");
+const [loadingSummary, setLoadingSummary] =
+  useState(false);
 
-  const [reviews, setReviews] = useState([]);
-  const [averageRating, setAverageRating] =
-    useState(0);
+const [reviews, setReviews] = useState([]);
+const [averageRating, setAverageRating] =
+  useState(0);
 
-  const [totalReviews, setTotalReviews] =
-    useState(0);
+const [totalReviews, setTotalReviews] =
+  useState(0);
 
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
+const [rating, setRating] = useState(5);
+const [comment, setComment] = useState("");
+  
+
 
   const fetchHospital = async () => {
     try {
@@ -185,6 +188,39 @@ function HospitalDetails() {
         );
       }
     };
+    const createReview = async () => {
+  try {
+    const user = JSON.parse(
+      localStorage.getItem("user")
+    );
+
+    if (!user) {
+      alert("Please login first");
+      return;
+    }
+
+    await axios.post(
+      "http://localhost:5000/api/reviews",
+      {
+        userId: user._id,
+        hospitalId: id,
+        rating,
+        comment,
+      }
+    );
+
+    alert("Review Added");
+
+    setRating(5);
+    setComment("");
+
+    fetchReviews();
+    fetchHospital();
+  } catch (error) {
+    console.log(error);
+    alert("Failed to add review");
+  }
+};
 
   useEffect(() => {
     fetchHospital();
@@ -199,20 +235,24 @@ function HospitalDetails() {
       <div className="text-center mt-10">
         Loading...
       </div>
-    );
+    );}
 
     return (
   <div className="max-w-5xl mx-auto px-6 py-10">
     <div className="bg-white shadow-lg rounded-xl p-8">
 
       <img
-        src={
-          hospital.image ||
-          "https://via.placeholder.com/800x400"
-        }
-        alt={hospital.name}
-        className="w-full h-80 object-cover rounded-2xl mb-6"
-      />
+  src={
+    hospital.image ||
+    "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200"
+  }
+  alt={hospital.name}
+  className="w-full h-56 object-cover"
+  onError={(e) => {
+    e.target.src =
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200";
+  }}
+/>
 
       <h1 className="text-4xl font-bold mb-4">
         {hospital.name}
@@ -236,9 +276,25 @@ function HospitalDetails() {
         🏛️ {hospital.state}
       </p>
 
-      <p className="mb-6 text-lg font-semibold">
-        ⭐ {hospital.rating}
-      </p>
+      <div className="flex gap-4 mb-6">
+
+  <span className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-semibold">
+    ⭐ {hospital.rating} Rating
+  </span>
+
+  <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full font-semibold">
+    📝 {totalReviews} Reviews
+  </span>
+
+  {hospital.rating >= 4.5 && (
+    <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full font-semibold">
+      🏆 Top Rated
+    </span>
+  )}
+
+</div>
+
+
 
       <div className="flex gap-3 mb-8">
 
@@ -278,7 +334,7 @@ function HospitalDetails() {
       <div>
 
         <h2 className="text-2xl font-bold mb-4">
-          Services
+          🩺 Available Services
         </h2>
 
         {services.length === 0 ? (
@@ -317,18 +373,22 @@ function HospitalDetails() {
                   </div>
 
                   <button
-                    onClick={() =>
-                      navigate("/book", {
-                        state: {
-                          hospital,
-                          service,
-                        },
-                      })
-                    }
-                    className="bg-blue-600 text-white px-3 py-2 rounded-lg cursor-pointer mt-2"
-                  >
-                    Book Now
-                  </button>
+  onClick={() => {
+    console.log("Book clicked");
+    console.log(hospital);
+    console.log(service);
+
+    navigate("/book", {
+      state: {
+        hospital,
+        service,
+      },
+    });
+  }}
+  className="bg-blue-600 text-white px-3 py-2 rounded-lg cursor-pointer mt-2"
+>
+  Book Now
+</button>
 
                 </div>
 
@@ -394,7 +454,7 @@ function HospitalDetails() {
 
           <button
             onClick={submitReview}
-            className="bg-yellow-500 text-white px-5 py-3 rounded-lg"
+            className="bg-yellow-500 text-white px-5 cursor-pointer py-3 rounded-lg"
           >
             Submit Review
           </button>
@@ -447,44 +507,9 @@ function HospitalDetails() {
         )}
 
       </div>
-
-      {/* AI Review Summary */}
-
-      <div className="mt-10">
-
-        <h2 className="text-2xl font-bold mb-4">
-          🤖 AI Review Summary
-        </h2>
-
-        <button
-          onClick={generateSummary}
-          className="bg-purple-600 text-white px-5 py-3 cursor-pointer rounded-lg"
-        >
-          {loadingSummary
-            ? "Generating..."
-            : "Generate AI Summary"}
-        </button>
-
-        {summary && (
-          <div className="mt-5 bg-purple-50 border border-purple-200 rounded-xl p-5">
-
-            <h3 className="text-xl font-bold mb-3">
-              ⭐ AI Review Summary
-            </h3>
-
-            <p className="whitespace-pre-wrap text-gray-700">
-              {summary}
-            </p>
-
-          </div>
-        )}
-
-      </div>
-
     </div>
   </div>
 );
 
-}
 }
 export default HospitalDetails;

@@ -13,13 +13,13 @@ function Hero() {
           <div>
 
             <span className="bg-white/20 px-4 py-2 rounded-full text-sm font-semibold">
-              🚀 AI Powered Healthcare Platform
+            🏥 AI Powered Hospital Comparison Platform
             </span>
 
             <h1 className="text-5xl lg:text-7xl font-bold mt-6 leading-tight">
-              Find The Best
+              Compare & Choose
               <span className="block text-yellow-300">
-                Hospital Near You
+                The Best Hospital
               </span>
             </h1>
 
@@ -143,9 +143,10 @@ function Hero() {
                   </h4>
 
                   <p className="mt-2 text-gray-700">
-                    Based on ratings, reviews and
-                    service quality, Yashoda Hospital
-                    is currently the top recommendation.
+                    Based on ratings, patient reviews,
+service quality and pricing,
+Yashoda Hospital offers the best
+overall value.
                   </p>
 
                 </div>

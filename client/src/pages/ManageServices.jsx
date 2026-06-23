@@ -23,25 +23,18 @@ function ManageServices() {
   };
 
   const deleteService = async (id) => {
-    const confirmDelete = window.confirm(
-      "Delete this service?"
+  try {
+    await axios.delete(
+      `http://localhost:5000/api/services/${id}`
     );
 
-    if (!confirmDelete) return;
+    alert("Service deleted");
 
-    try {
-      await axios.delete(
-        `http://localhost:5000/api/services/${id}`
-      );
-
-      fetchServices();
-
-      alert("Service Deleted");
-    } catch (error) {
-      console.log(error);
-      alert("Delete Failed");
-    }
-  };
+    fetchServices();
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   const filteredServices = services.filter(
     (service) =>

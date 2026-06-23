@@ -102,3 +102,22 @@ export const compareServices = async (req, res) => {
     });
   }
 };
+
+export const deleteService = async (
+  req,
+  res
+) => {
+  try {
+    await Service.findByIdAndDelete(
+      req.params.id
+    );
+
+    res.json({
+      message: "Service deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
