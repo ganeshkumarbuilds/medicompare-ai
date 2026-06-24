@@ -29,7 +29,11 @@ function Login() {
 
 localStorage.setItem(
   "user",
-  JSON.stringify(data.user)
+  JSON.stringify({
+    _id: data.userId,
+    name: data.name,
+    email: data.email,
+  })
 );
 
       alert("Login Successful");

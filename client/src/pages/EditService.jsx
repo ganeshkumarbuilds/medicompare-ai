@@ -52,7 +52,7 @@ function EditService() {
       setLoading(true);
 
       await axios.put(
-        `http://localhost:5000/api/services/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/services/${id}`,
         formData
       );
 

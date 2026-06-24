@@ -24,9 +24,13 @@ function Register() {
 
       console.log(data);
 
-    localStorage.setItem(
-  "userId",
-  data.userId
+      localStorage.setItem(
+  "user",
+  JSON.stringify({
+    _id: data.userId,
+    name,
+    email,
+  })
 );
 
       alert("Registration Successful");

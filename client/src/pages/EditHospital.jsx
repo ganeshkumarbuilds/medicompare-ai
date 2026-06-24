@@ -26,7 +26,7 @@ function EditHospital() {
   const fetchHospital = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5000/api/hospitals/${id}`
+        `${import.meta.env.VITE_API_URL}/api/hospitals/${id}`
       );
 
       setFormData({
@@ -58,7 +58,7 @@ function EditHospital() {
       setLoading(true);
 
       await axios.put(
-        `http://localhost:5000/api/hospitals/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/hospitals/${id}`,
         formData
       );
 
