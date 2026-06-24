@@ -129,22 +129,7 @@ const updateStatus = async (
     },
   ];
 
-  const generateServices = async () => {
-  try {
-    const { data } = await axios.post(
-      "http://localhost:5000/api/admin/generate-services"
-    );
-
-    alert(
-      `${data.createdCount} services generated successfully`
-    );
-
-    fetchStats();
-  } catch (error) {
-    console.log(error);
-    alert("Failed to generate services");
-  }
-};
+  
 const chartData = [
   {
     name: "Pending",
@@ -603,12 +588,7 @@ console.log(bookings.length);
 
         {/* Actions */}
         <div className="grid md:grid-cols-2 gap-6">
-          <button
-  onClick={generateServices}
-  className="bg-red-600 hover:bg-red-700 text-white p-6 rounded-2xl text-center cursor-pointer text-xl font-semibold"
->
-  ⚡ Generate 250 Services
-</button>
+          
 
           <Link
             to="/admin/add-hospital"
