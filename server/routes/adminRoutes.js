@@ -4,7 +4,6 @@ import {
   getAdminStats,
   hospitalRatings,
   recentBookings,
-  generateServices,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -21,9 +20,5 @@ router.get(
   recentBookings
 );
 
-router.post(
-  "/generate-services",
-  generateServices
-);
 
 export default router;
