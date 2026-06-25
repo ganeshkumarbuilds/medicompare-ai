@@ -2,6 +2,8 @@ import Booking from "../models/Booking.js";
 
 export const createBooking = async (req, res) => {
   try {
+    console.log("Request Body:", req.body);
+
     const booking = await Booking.create(req.body);
 
     res.status(201).json({
@@ -9,6 +11,10 @@ export const createBooking = async (req, res) => {
       booking,
     });
   } catch (error) {
+    console.error("============== BOOKING ERROR ==============");
+    console.error(error);
+    console.error("===========================================");
+
     res.status(500).json({
       message: error.message,
     });

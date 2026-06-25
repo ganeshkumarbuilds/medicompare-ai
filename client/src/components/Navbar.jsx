@@ -50,7 +50,7 @@ console.log("role =", user?.role);
 
           {/* Desktop Menu */}
 
-          <div className="hidden lg:flex items-center gap-5 cursor-pointer">
+          <div className="hidden lg:flex items-center gap-5 cursor-pointer text-sm">
 
             <Link
               to="/"
@@ -112,15 +112,13 @@ console.log("role =", user?.role);
                 </Link>
               </>
             )}
-            {user &&
- user.role &&
- user.role.toLowerCase().trim() === "hospitaladmin" && (
+            {user?.role?.toLowerCase().trim() === "hospitaladmin" && (
   <Link
     to="/admin"
-    className="flex items-center gap-2 text-purple-600 font-semibold hover:text-purple-800"
+    onClick={closeMenu}
+    className="px-4 py-3 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition"
   >
-    <Shield size={18} />
-    Admin Panel
+    👨‍💼 Admin Panel
   </Link>
 )}
             {user && (
@@ -241,7 +239,7 @@ console.log("role =", user?.role);
               </>
             )}
 
-            {true && (
+            {user?.role?.toLowerCase().trim() === "hospitaladmin" && (
   <Link
     to="/admin"
     onClick={closeMenu}

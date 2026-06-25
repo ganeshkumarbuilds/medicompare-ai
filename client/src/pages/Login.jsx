@@ -22,19 +22,13 @@ function Login() {
 
       console.log(data);
 
-      localStorage.setItem(
-  "token",
-  data.token
-);
+      localStorage.setItem("token", data.token);
 
 localStorage.setItem(
   "user",
-  JSON.stringify({
-    _id: data.userId,
-    name: data.name,
-    email: data.email,
-  })
+  JSON.stringify(data.user)
 );
+console.log("Saved user:", data.user);
 
       alert("Login Successful");
 

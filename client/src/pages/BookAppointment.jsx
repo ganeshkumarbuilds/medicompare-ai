@@ -12,9 +12,11 @@ function BookAppointment() {
 
     const handleBooking = async () => {
   try {
-    const user = JSON.parse(
-      localStorage.getItem("user")
-    );
+    const storedData = JSON.parse(
+  localStorage.getItem("user")
+);
+
+const user = storedData?.user || storedData;
 
     if (!user) {
       alert("Please login first");
@@ -25,6 +27,12 @@ function BookAppointment() {
       alert("Please select date & time");
       return;
     }
+    console.log({
+  userId: user?._id,
+  hospitalId: hospital?._id,
+  serviceId: service?._id,
+  appointmentDate,
+});
 
     await axios.post(
       `${import.meta.env.VITE_API_URL}/api/bookings`,
