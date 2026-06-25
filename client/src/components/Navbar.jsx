@@ -10,9 +10,14 @@ import {
 function Navbar() {
   const [open, setOpen] = useState(false);
 
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
+  const storedData = JSON.parse(
+  localStorage.getItem("user")
+);
+
+const user = storedData?.user || storedData;
+console.log("storedData =", storedData);
+console.log("user =", user);
+console.log("role =", user?.role);
 
   const isLoggedIn = !!user;
 
@@ -107,18 +112,17 @@ function Navbar() {
                 </Link>
               </>
             )}
-
-            {user?.role ===
-              "hospitalAdmin" && (
-              <Link
-                to="/admin"
-                className="flex items-center gap-2 text-purple-600 font-semibold hover:text-purple-800"
-              >
-                <Shield size={18} />
-                Admin
-              </Link>
-            )}
-
+            {user &&
+ user.role &&
+ user.role.toLowerCase().trim() === "hospitaladmin" && (
+  <Link
+    to="/admin"
+    className="flex items-center gap-2 text-purple-600 font-semibold hover:text-purple-800"
+  >
+    <Shield size={18} />
+    Admin Panel
+  </Link>
+)}
             {user && (
               <div className="bg-blue-50 px-3 py-2 rounded-full text-sm font-semibold">
                 👤 {user.name}
@@ -237,16 +241,15 @@ function Navbar() {
               </>
             )}
 
-            {user?.role ===
-              "hospitalAdmin" && (
-              <Link
-                to="/admin"
-                onClick={closeMenu}
-                className="px-4 py-3 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition"
-              >
-                👨‍💼 Admin Panel
-              </Link>
-            )}
+            {true && (
+  <Link
+    to="/admin"
+    onClick={closeMenu}
+    className="px-4 py-3 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition"
+  >
+    👨‍💼 Admin Panel
+  </Link>
+)}
 
             {user && (
               <div className="mt-3 bg-gray-100 p-3 rounded-lg">
