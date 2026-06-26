@@ -84,14 +84,17 @@ export const compareServices = async (req, res) => {
       },
     }).populate("hospitalId");
 
-    const comparison = results.map((item) => ({
-      hospitalName: item.hospitalId?.name,
-      city: item.hospitalId?.city,
-      rating: item.hospitalId?.rating,
-      serviceName: item.serviceName,
-      price: item.price,
-      duration: item.duration,
-    }));
+    const comparison = results
+  .filter(item => item.hospitalId)
+  .map(item => ({
+    hospitalId: item.hospitalId._id.toString(),
+    hospitalName: item.hospitalId.name,
+    city: item.hospitalId.city,
+    rating: item.hospitalId.rating,
+    serviceName: item.serviceName,
+    price: item.price,
+    duration: item.duration,
+  }));
 
     comparison.sort((a, b) => a.price - b.price);
 

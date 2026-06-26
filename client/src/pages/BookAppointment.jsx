@@ -27,13 +27,7 @@ const user = storedData?.user || storedData;
       alert("Please select date & time");
       return;
     }
-    console.log({
-  userId: user?._id,
-  hospitalId: hospital?._id,
-  serviceId: service?._id,
-  appointmentDate,
-});
-
+    
     await axios.post(
       `${import.meta.env.VITE_API_URL}/api/bookings`,
       {

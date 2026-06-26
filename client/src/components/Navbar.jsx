@@ -15,9 +15,6 @@ function Navbar() {
 );
 
 const user = storedData?.user || storedData;
-console.log("storedData =", storedData);
-console.log("user =", user);
-console.log("role =", user?.role);
 
   const isLoggedIn = !!user;
 

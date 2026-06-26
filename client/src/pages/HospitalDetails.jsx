@@ -374,10 +374,6 @@ const [comment, setComment] = useState("");
 
                   <button
   onClick={() => {
-    console.log("Book clicked");
-    console.log(hospital);
-    console.log(service);
-
     navigate("/book", {
       state: {
         hospital,
