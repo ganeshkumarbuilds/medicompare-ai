@@ -299,17 +299,20 @@ setComparison(data);
                                           </div>
 
                     <div className="mt-8">
-                      onClick={() => {
-  console.log("Clicked:", hospital);
-  console.log("Hospital ID:", hospital.hospitalId);
-}}
-
-<Link
+                      <Link
   to={`/hospitals/${hospital.hospitalId}`}
   state={{
     selectedService: hospital.serviceName,
   }}
-></Link>
+  onClick={() => {
+    console.log("Clicked Hospital:", hospital);
+    console.log("Hospital ID:", hospital.hospitalId);
+  }}
+  className="block text-center bg-blue-600 hover:bg-blue-700 transition text-white font-bold rounded-2xl py-3"
+>
+  Book Appointment
+</Link>
+
                     </div>
 
                   </div>
