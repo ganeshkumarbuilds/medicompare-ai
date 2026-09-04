@@ -1,0 +1,6 @@
+.env
+node_modules/
+target/
+uploads/
+.idea/
+*.iml
