@@ -136,14 +136,30 @@ function Register() {
 
             /*
              * IMPORTANT:
-             * Registration does NOT log the user in.
-             * Remove any previous admin/user session so the
-             * newly registered account starts cleanly.
+             * Clear any previous admin/user session first, then
+             * store the new session from registration so the
+             * user is auto-logged in.
              */
             clearAuthentication();
 
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+            }
+
+            if (data.name) {
+                localStorage.setItem("name", data.name);
+            }
+
+            if (data.email) {
+                localStorage.setItem("email", data.email);
+            }
+
+            if (data.role) {
+                localStorage.setItem("role", data.role);
+            }
+
             setMessage(
-                "Account created successfully. Redirecting to login..."
+                "Account created successfully. Redirecting..."
             );
 
             setMessageType("success");
@@ -156,7 +172,7 @@ function Register() {
             });
 
             setTimeout(() => {
-                navigate("/login", {
+                navigate("/hospitals", {
                     replace: true
                 });
             }, 1000);

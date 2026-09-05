@@ -103,12 +103,24 @@ public class UserService {
         User savedUser =
                 userRepository.save(user);
 
+        /*
+         * Auto-login: generate a JWT immediately after registration
+         * so the frontend can log the user straight in without a
+         * separate login request.
+         */
+        String token =
+                jwtService.generateToken(
+                        savedUser.getEmail(),
+                        savedUser.getRole()
+                );
+
         return new RegisterResponse(
                 savedUser.getId(),
                 savedUser.getName(),
                 savedUser.getEmail(),
                 savedUser.getRole(),
-                "Account created successfully."
+                "Account created successfully.",
+                token
         );
     }
 
@@ -117,9 +129,6 @@ public class UserService {
             UserLoginRequest request
     ) {
 
-        /*
-         * Validate request.
-         */
         if (request == null) {
             throw new BadCredentialsException(
                     "Invalid email or password."
@@ -146,9 +155,6 @@ public class UserService {
                 .trim()
                 .toLowerCase();
 
-        /*
-         * Find user by email.
-         */
         User user =
                 userRepository
                         .findByEmailIgnoreCase(email)
@@ -158,9 +164,6 @@ public class UserService {
                                 )
                         );
 
-        /*
-         * Check whether the account is enabled.
-         */
         if (!user.isEnabled()) {
 
             throw new ResponseStatusException(
@@ -169,9 +172,6 @@ public class UserService {
             );
         }
 
-        /*
-         * Make sure a password exists in the database.
-         */
         if (user.getPassword() == null
                 || user.getPassword().isEmpty()) {
 
@@ -180,25 +180,12 @@ public class UserService {
             );
         }
 
-        /*
-         * Normal password authentication.
-         *
-         * This compares the raw password supplied by the user
-         * with the encoded password stored in PostgreSQL.
-         */
         boolean passwordMatches =
                 passwordEncoder.matches(
                         request.getPassword(),
                         user.getPassword()
                 );
 
-        /*
-         * Legacy support:
-         *
-         * If an old account has a plaintext password stored in
-         * the database, allow the login once and immediately
-         * replace it with an encoded password.
-         */
         if (!passwordMatches
                 && request.getPassword()
                 .equals(user.getPassword())) {
@@ -214,9 +201,6 @@ public class UserService {
             passwordMatches = true;
         }
 
-        /*
-         * Password is incorrect.
-         */
         if (!passwordMatches) {
 
             throw new BadCredentialsException(
@@ -224,18 +208,12 @@ public class UserService {
             );
         }
 
-        /*
-         * Generate JWT after successful authentication.
-         */
         String token =
                 jwtService.generateToken(
                         user.getEmail(),
                         user.getRole()
                 );
 
-        /*
-         * Return login response.
-         */
         return new UserLoginResponse(
                 token,
                 user.getId(),
