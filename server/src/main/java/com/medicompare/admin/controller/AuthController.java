@@ -3,11 +3,13 @@ package com.medicompare.admin.controller;
 import com.medicompare.admin.dto.LoginRequest;
 import com.medicompare.admin.dto.LoginResponse;
 import com.medicompare.admin.service.AdminService;
-
 import jakarta.validation.Valid;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,11 +24,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request
-    ) {
+            @Valid @RequestBody LoginRequest request) {
 
-        return ResponseEntity.ok(
-                adminService.login(request)
-        );
+        LoginResponse response = adminService.login(request);
+
+        return ResponseEntity.ok(response);
     }
 }
