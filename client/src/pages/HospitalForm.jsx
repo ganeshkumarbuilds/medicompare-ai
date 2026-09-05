@@ -85,7 +85,7 @@ function HospitalForm() {
 
 
             await axios.post(
-                "http://localhost:8080/api/admin/hospitals",
+                `${import.meta.env.VITE_API_URL}/api/admin/hospitals`,
                 hospitalData,
                 {
                     headers: {

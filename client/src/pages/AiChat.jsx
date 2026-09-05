@@ -1,8 +1,7 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 
-const API_URL = "http://localhost:8080";
-
+const API_URL = import.meta.env.VITE_API_URL;
 function AiChat() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
