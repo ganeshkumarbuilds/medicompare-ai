@@ -29,31 +29,34 @@ public class AdminDataInitializer implements CommandLineRunner {
     public void run(String... args) {
 
         Admin admin = adminRepository
-                .findByEmail(ADMIN_EMAIL)
+                .findByEmailIgnoreCase(ADMIN_EMAIL)
                 .orElseGet(Admin::new);
 
         admin.setName(ADMIN_NAME);
         admin.setEmail(ADMIN_EMAIL);
+        admin.setRole(ADMIN_ROLE);
+        admin.setActive(true);
 
         /*
          * Always store a BCrypt hash.
          *
          * This also repairs an old admin record whose password
-         * was stored using a different hash or plain text.
+         * was stored using a different hash or plain text, by
+         * re-encoding it whenever it doesn't already match.
          */
-        if (!passwordEncoder.matches(
-                ADMIN_PASSWORD,
+        boolean passwordNeedsUpdate =
                 admin.getPassword() == null
-                        ? ""
-                        : admin.getPassword()
-        )) {
+                        || admin.getPassword().isEmpty()
+                        || !passwordEncoder.matches(
+                                ADMIN_PASSWORD,
+                                admin.getPassword()
+                        );
+
+        if (passwordNeedsUpdate) {
             admin.setPassword(
                     passwordEncoder.encode(ADMIN_PASSWORD)
             );
         }
-
-        admin.setRole(ADMIN_ROLE);
-        admin.setActive(true);
 
         adminRepository.save(admin);
 
