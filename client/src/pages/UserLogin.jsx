@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
+
 function UserLogin() {
     const navigate = useNavigate();
 
@@ -266,7 +267,7 @@ function UserLogin() {
 
                     <p className="mt-6 text-center text-[20px] text-[#61708a]">
 
-                        Don’t have an account?{" "}
+                        Don't have an account?{" "}
 
                         <button
                             type="button"
