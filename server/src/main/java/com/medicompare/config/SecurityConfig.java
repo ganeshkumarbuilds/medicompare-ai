@@ -72,13 +72,16 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(
-            List.of(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                frontendUrl
-            )
-        );
+        List<String> origins = new java.util.ArrayList<>(List.of(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://client-iota-one-53.vercel.app"
+        ));
+        if (frontendUrl != null && !frontendUrl.isBlank() && !origins.contains(frontendUrl)) {
+            origins.add(frontendUrl);
+        }
+
+        configuration.setAllowedOrigins(origins);
 
         configuration.setAllowedMethods(
             List.of(
