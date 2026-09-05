@@ -37,6 +37,31 @@ public class UserService {
             RegisterRequest request
     ) {
 
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Registration request is required."
+            );
+        }
+
+        if (request.getEmail() == null
+                || request.getEmail().trim().isEmpty()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Email is required."
+            );
+        }
+
+        if (request.getPassword() == null
+                || request.getPassword().isEmpty()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Password is required."
+            );
+        }
+
         String email = request.getEmail()
                 .trim()
                 .toLowerCase();
@@ -52,11 +77,16 @@ public class UserService {
         User user = new User();
 
         user.setName(
-                request.getName().trim()
+                request.getName() != null
+                        ? request.getName().trim()
+                        : ""
         );
 
         user.setEmail(email);
 
+        /*
+         * Always store the password encoded.
+         */
         user.setPassword(
                 passwordEncoder.encode(
                         request.getPassword()
@@ -64,11 +94,7 @@ public class UserService {
         );
 
         /*
-         * SECURITY:
-         * Users registering through the public
-         * registration endpoint are ALWAYS USER.
-         *
-         * The frontend cannot choose ADMIN.
+         * Public registration can NEVER create an ADMIN.
          */
         user.setRole("USER");
 
@@ -86,15 +112,43 @@ public class UserService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserLoginResponse login(
             UserLoginRequest request
     ) {
+
+        /*
+         * Validate request.
+         */
+        if (request == null) {
+            throw new BadCredentialsException(
+                    "Invalid email or password."
+            );
+        }
+
+        if (request.getEmail() == null
+                || request.getEmail().trim().isEmpty()) {
+
+            throw new BadCredentialsException(
+                    "Invalid email or password."
+            );
+        }
+
+        if (request.getPassword() == null
+                || request.getPassword().isEmpty()) {
+
+            throw new BadCredentialsException(
+                    "Invalid email or password."
+            );
+        }
 
         String email = request.getEmail()
                 .trim()
                 .toLowerCase();
 
+        /*
+         * Find user by email.
+         */
         User user =
                 userRepository
                         .findByEmailIgnoreCase(email)
@@ -104,6 +158,9 @@ public class UserService {
                                 )
                         );
 
+        /*
+         * Check whether the account is enabled.
+         */
         if (!user.isEnabled()) {
 
             throw new ResponseStatusException(
@@ -112,22 +169,73 @@ public class UserService {
             );
         }
 
-        if (!passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        )) {
+        /*
+         * Make sure a password exists in the database.
+         */
+        if (user.getPassword() == null
+                || user.getPassword().isEmpty()) {
 
             throw new BadCredentialsException(
                     "Invalid email or password."
             );
         }
 
+        /*
+         * Normal password authentication.
+         *
+         * This compares the raw password supplied by the user
+         * with the encoded password stored in PostgreSQL.
+         */
+        boolean passwordMatches =
+                passwordEncoder.matches(
+                        request.getPassword(),
+                        user.getPassword()
+                );
+
+        /*
+         * Legacy support:
+         *
+         * If an old account has a plaintext password stored in
+         * the database, allow the login once and immediately
+         * replace it with an encoded password.
+         */
+        if (!passwordMatches
+                && request.getPassword()
+                .equals(user.getPassword())) {
+
+            user.setPassword(
+                    passwordEncoder.encode(
+                            request.getPassword()
+                    )
+            );
+
+            userRepository.save(user);
+
+            passwordMatches = true;
+        }
+
+        /*
+         * Password is incorrect.
+         */
+        if (!passwordMatches) {
+
+            throw new BadCredentialsException(
+                    "Invalid email or password."
+            );
+        }
+
+        /*
+         * Generate JWT after successful authentication.
+         */
         String token =
                 jwtService.generateToken(
                         user.getEmail(),
                         user.getRole()
                 );
 
+        /*
+         * Return login response.
+         */
         return new UserLoginResponse(
                 token,
                 user.getId(),
@@ -142,8 +250,19 @@ public class UserService {
             String email
     ) {
 
+        if (email == null
+                || email.trim().isEmpty()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Email is required."
+            );
+        }
+
         return userRepository
-                .findByEmailIgnoreCase(email)
+                .findByEmailIgnoreCase(
+                        email.trim()
+                )
                 .orElseThrow(() ->
                         new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
