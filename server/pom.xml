@@ -151,6 +151,12 @@
     <version>3.2.0</version>
 </dependency>
 
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.6.0</version>
+</dependency>
+
 <!-- JWT Implementation -->
 <dependency>
     <groupId>io.jsonwebtoken</groupId>

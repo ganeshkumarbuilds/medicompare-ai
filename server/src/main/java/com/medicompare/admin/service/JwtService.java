@@ -3,6 +3,7 @@ package com.medicompare.admin.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -12,16 +13,16 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final String SECRET =
-            "MediCompareSuperSecretKeyForJwtAuthentication2026Secure";
-
     private static final long EXPIRATION_TIME =
             1000L * 60 * 60 * 24;
 
-    private final SecretKey secretKey =
-            Keys.hmacShaKeyFor(
-                    SECRET.getBytes(StandardCharsets.UTF_8)
-            );
+    private final SecretKey secretKey;
+
+    public JwtService(@Value("${jwt.secret}") String secret) {
+        this.secretKey = Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
+    }
 
     public String generateToken(String email, String role) {
 

@@ -2,6 +2,7 @@ package com.medicompare.config;
 
 import com.medicompare.admin.entity.Admin;
 import com.medicompare.admin.repository.AdminRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -9,10 +10,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class AdminDataInitializer implements CommandLineRunner {
 
-    private static final String ADMIN_EMAIL = "admin@medicompare.com";
-    private static final String ADMIN_PASSWORD = "admin123";
     private static final String ADMIN_NAME = "MediCompare Admin";
     private static final String ADMIN_ROLE = "ADMIN";
+
+    @Value("${admin.default.email}")
+    private String adminEmail;
+
+    @Value("${admin.default.password}")
+    private String adminPassword;
 
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
@@ -29,11 +34,11 @@ public class AdminDataInitializer implements CommandLineRunner {
     public void run(String... args) {
 
         Admin admin = adminRepository
-                .findByEmailIgnoreCase(ADMIN_EMAIL)
+                .findByEmailIgnoreCase(adminEmail)
                 .orElseGet(Admin::new);
 
         admin.setName(ADMIN_NAME);
-        admin.setEmail(ADMIN_EMAIL);
+        admin.setEmail(adminEmail);
         admin.setRole(ADMIN_ROLE);
         admin.setActive(true);
 
@@ -48,13 +53,13 @@ public class AdminDataInitializer implements CommandLineRunner {
                 admin.getPassword() == null
                         || admin.getPassword().isEmpty()
                         || !passwordEncoder.matches(
-                                ADMIN_PASSWORD,
+                                adminPassword,
                                 admin.getPassword()
                         );
 
         if (passwordNeedsUpdate) {
             admin.setPassword(
-                    passwordEncoder.encode(ADMIN_PASSWORD)
+                    passwordEncoder.encode(adminPassword)
             );
         }
 
@@ -63,8 +68,7 @@ public class AdminDataInitializer implements CommandLineRunner {
         System.out.println();
         System.out.println("==============================================");
         System.out.println("MediCompare admin account ready");
-        System.out.println("Email    : " + ADMIN_EMAIL);
-        System.out.println("Password : " + ADMIN_PASSWORD);
+        System.out.println("Email    : " + adminEmail);
         System.out.println("Role     : " + ADMIN_ROLE);
         System.out.println("==============================================");
         System.out.println();

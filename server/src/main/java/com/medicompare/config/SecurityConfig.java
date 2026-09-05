@@ -48,7 +48,11 @@ public class SecurityConfig {
                     "/api/hello",
                     "/error",
                     "/api/auth/**",
-                    "/api/user/auth/**"
+                    "/api/user/auth/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/api-docs/**",
+                    "/v3/api-docs/**"
                 ).permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/admin/**").authenticated()
