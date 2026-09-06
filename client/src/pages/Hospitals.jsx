@@ -658,7 +658,7 @@ function UserHospitalsPage({
                     {!loading &&
                         filteredHospitals.length > 0 && (
 
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
                                 {filteredHospitals.map(
                                     hospital => (
@@ -734,148 +734,170 @@ function UserHospitalCard({
 
     return (
 
-        <article className="group overflow-hidden rounded-3xl border border-ink-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md">
+        <article
+            onClick={onView}
+            className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-3xl border border-ink-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-100/50"
+        >
 
-            <div className="flex h-full flex-col">
+            {/* IMAGE */}
 
+            <div className="relative h-48 w-full shrink-0 overflow-hidden bg-gradient-to-br from-ink-100 to-ink-50">
 
-                {/* IMAGE */}
+                {imageUrl ? (
 
-                <div className="h-40 w-full bg-ink-100">
+                    <img
+                        src={imageUrl}
+                        alt={
+                            hospital.name ||
+                            "Hospital"
+                        }
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        onError={(event) => {
 
-                    {imageUrl ? (
+                            event.currentTarget.style.display =
+                                "none";
 
-                        <img
-                            src={imageUrl}
-                            alt={
-                                hospital.name ||
-                                "Hospital"
-                            }
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.01]"
-                            onError={(event) => {
-
-                                event.currentTarget.style.display =
-                                    "none";
-
-                                const fallback =
-                                    event.currentTarget.parentElement
-                                        ?.querySelector(
-                                            "[data-image-fallback]"
-                                        );
-
-                                if (fallback) {
-                                    fallback.classList.remove(
-                                        "hidden"
+                            const fallback =
+                                event.currentTarget.parentElement
+                                    ?.querySelector(
+                                        "[data-image-fallback]"
                                     );
-                                }
-                            }}
-                        />
 
-                    ) : null}
+                            if (fallback) {
+                                fallback.classList.remove(
+                                    "hidden"
+                                );
+                            }
+                        }}
+                    />
+
+                ) : null}
 
 
-                    <div
-                        data-image-fallback
-                        className={`${
-                            imageUrl
-                                ? "hidden"
-                                : ""
-                        } flex h-full items-center justify-center text-5xl`}
-                    >
-                        🏥
-                    </div>
-
+                <div
+                    data-image-fallback
+                    className={`${
+                        imageUrl
+                            ? "hidden"
+                            : ""
+                    } flex h-full items-center justify-center text-5xl`}
+                >
+                    🏥
                 </div>
 
 
-                {/* CONTENT */}
+                {/* GRADIENT OVERLAY */}
 
-                <div className="flex flex-1 flex-col p-5">
-
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-
-                        <div>
-
-                            <h3 className="line-clamp-2 text-lg font-semibold leading-6 tracking-tight text-ink-900">
-                                {hospital.name}
-                            </h3>
-
-                            {hospital.hospitalType && (
-
-                                <span className="mt-2 inline-flex rounded-full bg-brand-100 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
-                                    {hospital.hospitalType}
-                                </span>
-
-                            )}
-
-                        </div>
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0" />
 
 
-                        {hospital.rating != null && (
+                {/* TYPE BADGE — overlaid on image */}
 
-                            <div className="rounded-lg bg-ink-50 px-2.5 py-1.5 text-xs font-semibold text-ink-700">
-                                ★ {hospital.rating}
-                            </div>
+                {hospital.hospitalType && (
 
-                        )}
+                    <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold text-ink-800 shadow-sm backdrop-blur-sm">
+                        {hospital.hospitalType}
+                    </span>
 
+                )}
+
+
+                {/* RATING PILL — overlaid on image */}
+
+                {hospital.rating != null && (
+
+                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-sm backdrop-blur-sm">
+                        <span className="text-amber-500">
+                            ★
+                        </span>
+                        {hospital.rating}
                     </div>
 
-
-                    <div className="mt-4 grid gap-2 text-xs text-ink-600">
-
-                        <Info
-                            label="City"
-                            value={hospital.city}
-                        />
-
-                        <Info
-                            label="Location"
-                            value={hospital.location}
-                        />
-
-                        <Info
-                            label="Address"
-                            value={hospital.address}
-                        />
-
-                        <Info
-                            label="Phone"
-                            value={hospital.phoneNumber}
-                        />
-
-                        <Info
-                            label="Consultation"
-                            value={
-                                hospital.consultationFee != null
-                                    ? `₹${hospital.consultationFee}`
-                                    : "Not specified"
-                            }
-                        />
-
-                    </div>
+                )}
 
 
-                    {hospital.description && (
+                {/* NAME — overlaid at bottom of image */}
 
-                        <p className="mt-4 line-clamp-2 text-xs leading-5 text-ink-500">
-                            {hospital.description}
+                <div className="absolute inset-x-0 bottom-0 p-4">
+
+                    <h3 className="line-clamp-1 text-lg font-bold leading-6 tracking-tight text-white drop-shadow-sm">
+                        {hospital.name}
+                    </h3>
+
+                    {hospital.city && (
+
+                        <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-white/90 drop-shadow-sm">
+                            <span>📍</span>
+                            {hospital.city}
                         </p>
 
                     )}
 
+                </div>
 
-                    <div className="mt-auto pt-5">
+            </div>
 
-                        <button
-                            type="button"
-                            onClick={onView}
-                            className="w-full rounded-xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-600 active:scale-[0.99]"
-                        >
-                            View Hospital
-                        </button>
 
-                    </div>
+            {/* CONTENT */}
+
+            <div className="flex flex-1 flex-col p-5">
+
+                <div className="grid gap-2 text-xs text-ink-600">
+
+                    <Info
+                        label="Location"
+                        value={hospital.location}
+                    />
+
+                    <Info
+                        label="Address"
+                        value={hospital.address}
+                    />
+
+                    <Info
+                        label="Phone"
+                        value={hospital.phoneNumber}
+                    />
+
+                </div>
+
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-ink-50 px-3.5 py-2.5">
+
+                    <span className="text-xs font-medium text-ink-500">
+                        Consultation
+                    </span>
+
+                    <span className="text-sm font-bold text-ink-900">
+                        {hospital.consultationFee != null
+                            ? `₹${hospital.consultationFee}`
+                            : "Not specified"}
+                    </span>
+
+                </div>
+
+
+                {hospital.description && (
+
+                    <p className="mt-4 line-clamp-2 text-xs leading-5 text-ink-500">
+                        {hospital.description}
+                    </p>
+
+                )}
+
+
+                <div className="mt-auto pt-5">
+
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onView();
+                        }}
+                        className="w-full rounded-xl bg-ink-900 px-4 py-3 text-sm font-semibold text-white transition group-hover:bg-brand-500 active:scale-[0.99]"
+                    >
+                        View Hospital →
+                    </button>
 
                 </div>
 
