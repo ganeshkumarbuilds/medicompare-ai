@@ -17,6 +17,10 @@ public class HospitalComparisonResponse {
 
     private Double rating;
 
+    private Double reviewAverage;
+
+    private Long reviewCount;
+
     private Double consultationFee;
 
     private String hospitalType;
@@ -54,6 +58,14 @@ public class HospitalComparisonResponse {
 
     public Double getRating() {
         return rating;
+    }
+
+    public Double getReviewAverage() {
+        return reviewAverage;
+    }
+
+    public Long getReviewCount() {
+        return reviewCount;
     }
 
     public Double getConsultationFee() {
@@ -110,6 +122,18 @@ public class HospitalComparisonResponse {
             Double rating
     ) {
         this.rating = rating;
+    }
+
+    public void setReviewAverage(
+            Double reviewAverage
+    ) {
+        this.reviewAverage = reviewAverage;
+    }
+
+    public void setReviewCount(
+            Long reviewCount
+    ) {
+        this.reviewCount = reviewCount;
     }
 
     public void setConsultationFee(

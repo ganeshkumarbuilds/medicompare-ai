@@ -3,6 +3,7 @@ package com.medicompare.compare.service;
 import com.medicompare.compare.dto.HospitalComparisonResponse;
 import com.medicompare.entity.Hospital;
 import com.medicompare.repository.HospitalRepository;
+import com.medicompare.review.repository.HospitalReviewRepository;
 import com.medicompare.serviceentity.HospitalService;
 import com.medicompare.serviceentity.HospitalServiceRepository;
 
@@ -16,13 +17,16 @@ public class HospitalComparisonService {
 
     private final HospitalRepository hospitalRepository;
     private final HospitalServiceRepository serviceRepository;
+    private final HospitalReviewRepository reviewRepository;
 
     public HospitalComparisonService(
             HospitalRepository hospitalRepository,
-            HospitalServiceRepository serviceRepository
+            HospitalServiceRepository serviceRepository,
+            HospitalReviewRepository reviewRepository
     ) {
         this.hospitalRepository = hospitalRepository;
         this.serviceRepository = serviceRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     // =========================
@@ -110,6 +114,30 @@ public class HospitalComparisonService {
 
             response.setImageUrl(
                     hospital.getImageUrl()
+            );
+
+            // =========================
+            // REAL PATIENT REVIEWS
+            // =========================
+
+            Double reviewAverage =
+                    reviewRepository.getAverageRating(
+                            hospitalId
+                    );
+
+            long reviewCount =
+                    reviewRepository.getReviewCount(
+                            hospitalId
+                    );
+
+            response.setReviewAverage(
+                    reviewAverage != null && reviewAverage > 0
+                            ? reviewAverage
+                            : null
+            );
+
+            response.setReviewCount(
+                    reviewCount
             );
 
             // =========================

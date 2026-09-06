@@ -554,6 +554,15 @@ function ComparisonTable({ hospitals }) {
                                     : "—"
                             }
                         />
+                        <ComparisonRow
+    label="Patient rating"
+    hospitals={hospitals}
+    render={(hospital) =>
+        hospital.reviewAverage != null
+            ? `★ ${Number(hospital.reviewAverage).toFixed(1)} (${hospital.reviewCount} review${hospital.reviewCount === 1 ? "" : "s"})`
+            : "No reviews yet"
+    }
+/>
 
                         <ComparisonRow
                             label="Consultation fee"
