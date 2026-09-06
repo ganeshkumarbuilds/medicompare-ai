@@ -1,5 +1,7 @@
 package com.medicompare.user.controller;
 
+import com.medicompare.user.dto.PasswordResetConfirmRequest;
+import com.medicompare.user.dto.PasswordResetRequest;
 import com.medicompare.user.dto.RegisterRequest;
 import com.medicompare.user.dto.RegisterResponse;
 import com.medicompare.user.dto.UserLoginRequest;
@@ -57,5 +59,27 @@ public class UserAuthController {
         user.setPassword(null);
 
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @RequestBody PasswordResetRequest request) {
+
+        userService.requestPasswordReset(request);
+
+        /*
+         * Always return 200 regardless of whether the email
+         * exists, to avoid leaking account information.
+         */
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @RequestBody PasswordResetConfirmRequest request) {
+
+        userService.confirmPasswordReset(request);
+
+        return ResponseEntity.ok().build();
     }
 }

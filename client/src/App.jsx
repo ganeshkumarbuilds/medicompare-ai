@@ -31,6 +31,8 @@ import Recommendations from "./pages/Recommendations";
 
 import Booking from "./pages/Booking";
 import BookingStatus from "./pages/BookingStatus";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 
 const AdminProtectedRoute = ({ children }) => {
@@ -117,6 +119,8 @@ function App() {
                         </UserProtectedRoute>
                     }
                 />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password" element={<ResetPassword />} />
 
                 <Route
                     path="/map"

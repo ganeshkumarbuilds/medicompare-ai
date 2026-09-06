@@ -49,9 +49,38 @@ function HospitalDetails() {
         useState("");
 
 
+    /*
+     * =====================================================
+     * REVIEWS STATE
+     * =====================================================
+     */
+
+    const [reviews, setReviews] =
+        useState([]);
+
+    const [reviewSummary, setReviewSummary] =
+        useState(null);
+
+    const [reviewsLoading, setReviewsLoading] =
+        useState(true);
+
+    const [reviewForm, setReviewForm] =
+        useState({ rating: 5, comment: "" });
+
+    const [reviewSubmitting, setReviewSubmitting] =
+        useState(false);
+
+    const [reviewError, setReviewError] =
+        useState("");
+
+    const [reviewSuccess, setReviewSuccess] =
+        useState("");
+
+
     useEffect(() => {
 
         loadHospital();
+        loadReviews();
 
     }, [id]);
 
@@ -248,6 +277,119 @@ function HospitalDetails() {
                     "Unable to load hospital details."
                 );
             }
+        }
+    }
+
+
+    /*
+     * =====================================================
+     * LOAD REVIEWS + SUMMARY
+     * =====================================================
+     */
+
+    async function loadReviews() {
+
+        try {
+
+            setReviewsLoading(true);
+
+            const [reviewsResponse, summaryResponse] =
+                await Promise.all([
+                    api.get(`/reviews/hospital/${id}`),
+                    api.get(`/reviews/hospital/${id}/summary`)
+                ]);
+
+            setReviews(
+                Array.isArray(reviewsResponse.data)
+                    ? reviewsResponse.data
+                    : []
+            );
+
+            setReviewSummary(summaryResponse.data || null);
+
+        } catch (reviewsError) {
+
+            console.warn(
+                "Unable to load reviews:",
+                reviewsError
+            );
+
+            setReviews([]);
+            setReviewSummary(null);
+
+        } finally {
+
+            setReviewsLoading(false);
+        }
+    }
+
+
+    /*
+     * =====================================================
+     * SUBMIT REVIEW
+     * =====================================================
+     */
+
+    async function handleReviewSubmit(event) {
+
+        event.preventDefault();
+
+        setReviewError("");
+        setReviewSuccess("");
+
+        if (!reviewForm.comment.trim()
+                || reviewForm.comment.trim().length < 5) {
+
+            setReviewError(
+                "Please write at least 5 characters."
+            );
+
+            return;
+        }
+
+        try {
+
+            setReviewSubmitting(true);
+
+            await api.post(
+                `/reviews/hospital/${id}`,
+                {
+                    hospitalId: Number(id),
+                    rating: Number(reviewForm.rating),
+                    comment: reviewForm.comment.trim()
+                }
+            );
+
+            setReviewForm({ rating: 5, comment: "" });
+            setReviewSuccess("Thank you! Your review has been posted.");
+
+            await loadReviews();
+
+        } catch (err) {
+
+            console.error(
+                "Failed to submit review:",
+                err
+            );
+
+            if (err.response?.status === 401
+                    || err.response?.status === 403) {
+
+                setReviewError(
+                    "Please log in to write a review."
+                );
+
+            } else {
+
+                setReviewError(
+                    err.response?.data?.message ||
+                    "Unable to submit your review. Please try again."
+                );
+            }
+
+        } finally {
+
+            setReviewSubmitting(false);
         }
     }
 
@@ -795,52 +937,222 @@ const displayImage =
 
                     <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
 
+
+                        {/* =================================================
+                            SUMMARY
+                        ================================================= */}
+
                         <div className="rounded-2xl border border-ink-200 bg-white p-7 text-center shadow-sm">
 
                             <p className="text-sm font-semibold text-ink-500">
-                                Overall rating
+                                Patient rating
                             </p>
 
                             <div className="mt-4 text-5xl font-bold text-ink-900">
-                                {rating !== null
-                                    ? rating.toFixed(1)
+                                {reviewSummary?.averageRating
+                                    ? reviewSummary.averageRating.toFixed(1)
                                     : "—"}
                             </div>
 
                             <div className="mt-3 text-xl tracking-widest text-amber-500">
-                                ★★★★★
+                                {"★".repeat(
+                                    Math.round(reviewSummary?.averageRating || 0)
+                                )}
+                                {"☆".repeat(
+                                    5 - Math.round(reviewSummary?.averageRating || 0)
+                                )}
                             </div>
 
                             <p className="mt-3 text-xs text-ink-400">
-                                Based on patient ratings
+                                {reviewSummary?.totalReviews
+                                    ? `Based on ${reviewSummary.totalReviews} review${
+                                          reviewSummary.totalReviews === 1 ? "" : "s"
+                                      }`
+                                    : "No reviews yet"}
                             </p>
+
+
+                            {reviewSummary?.ratingDistribution && (
+
+                                <div className="mt-6 space-y-2 text-left">
+
+                                    {[5, 4, 3, 2, 1].map(star => {
+
+                                        const count =
+                                            reviewSummary.ratingDistribution[star] || 0;
+
+                                        const total =
+                                            reviewSummary.totalReviews || 0;
+
+                                        const percentage =
+                                            total > 0
+                                                ? (count / total) * 100
+                                                : 0;
+
+                                        return (
+
+                                            <div
+                                                key={star}
+                                                className="flex items-center gap-2 text-xs text-ink-500"
+                                            >
+                                                <span className="w-8 shrink-0">
+                                                    {star} ★
+                                                </span>
+
+                                                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-100">
+                                                    <div
+                                                        className="h-full rounded-full bg-amber-400"
+                                                        style={{
+                                                            width: `${percentage}%`
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                <span className="w-5 shrink-0 text-right">
+                                                    {count}
+                                                </span>
+                                            </div>
+
+                                        );
+                                    })}
+
+                                </div>
+
+                            )}
 
                         </div>
 
 
-                        <div className="rounded-2xl border border-dashed border-ink-300 bg-white p-8">
+                        {/* =================================================
+                            REVIEWS LIST + FORM
+                        ================================================= */}
 
-                            <div className="flex items-start gap-4">
+                        <div className="space-y-5">
 
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-100 text-lg font-bold text-brand-700">
-                                    💬
+
+                            {/* WRITE A REVIEW */}
+
+                            <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
+
+                                <h3 className="font-bold text-ink-900">
+                                    Write a review
+                                </h3>
+
+                                <form
+                                    onSubmit={handleReviewSubmit}
+                                    className="mt-4"
+                                >
+
+                                    <div className="flex items-center gap-1">
+
+                                        {[1, 2, 3, 4, 5].map(star => (
+
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() =>
+                                                    setReviewForm(previous => ({
+                                                        ...previous,
+                                                        rating: star
+                                                    }))
+                                                }
+                                                className={`text-2xl transition ${
+                                                    star <= reviewForm.rating
+                                                        ? "text-amber-500"
+                                                        : "text-ink-200"
+                                                }`}
+                                            >
+                                                ★
+                                            </button>
+
+                                        ))}
+
+                                    </div>
+
+                                    <textarea
+                                        value={reviewForm.comment}
+                                        onChange={(event) =>
+                                            setReviewForm(previous => ({
+                                                ...previous,
+                                                comment: event.target.value
+                                            }))
+                                        }
+                                        placeholder="Share your experience with this hospital..."
+                                        rows={3}
+                                        className="mt-3 w-full rounded-xl border border-ink-200 px-4 py-3 text-sm text-ink-800 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+                                    />
+
+                                    {reviewError && (
+
+                                        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
+                                            {reviewError}
+                                        </div>
+
+                                    )}
+
+                                    {reviewSuccess && (
+
+                                        <div className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700">
+                                            {reviewSuccess}
+                                        </div>
+
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={reviewSubmitting}
+                                        className="mt-4 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {reviewSubmitting
+                                            ? "Posting..."
+                                            : "Post review"}
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+
+                            {/* REVIEWS LIST */}
+
+                            {reviewsLoading ? (
+
+                                <div className="rounded-2xl border border-ink-200 bg-white p-8 text-center">
+
+                                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-ink-200 border-t-brand-500" />
+
                                 </div>
 
-                                <div>
+                            ) : reviews.length === 0 ? (
 
-                                    <h3 className="font-bold text-ink-900">
-                                        Patient reviews
-                                    </h3>
+                                <div className="rounded-2xl border border-dashed border-ink-300 bg-white p-8 text-center">
 
-                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
-                                        Patient reviews will appear here
-                                        once users start sharing their
-                                        experiences with this hospital.
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-lg">
+                                        💬
+                                    </div>
+
+                                    <p className="mt-3 text-sm text-ink-500">
+                                        No reviews yet. Be the first to share your experience.
                                     </p>
 
                                 </div>
 
-                            </div>
+                            ) : (
+
+                                <div className="space-y-4">
+
+                                    {reviews.map(review => (
+
+                                        <ReviewCard
+                                            key={review.id}
+                                            review={review}
+                                        />
+
+                                    ))}
+
+                                </div>
+
+                            )}
 
                         </div>
 
@@ -1088,6 +1400,74 @@ function ServiceCard({
                     ? "Book this service"
                     : "Unavailable"}
             </button>
+
+        </div>
+    );
+}
+
+
+/* =====================================================
+   REVIEW CARD
+===================================================== */
+
+function ReviewCard({
+    review
+}) {
+
+    const initials =
+        (review.userName || "U")
+            .trim()
+            .charAt(0)
+            .toUpperCase();
+
+    const date =
+        review.createdAt
+            ? new Date(review.createdAt).toLocaleDateString(
+                  "en-IN",
+                  { day: "numeric", month: "short", year: "numeric" }
+              )
+            : "";
+
+    return (
+
+        <div className="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
+
+            <div className="flex items-start justify-between gap-4">
+
+                <div className="flex items-start gap-3">
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                        {initials}
+                    </div>
+
+                    <div>
+
+                        <p className="text-sm font-bold text-ink-900">
+                            {review.userName || "Anonymous"}
+                        </p>
+
+                        <div className="mt-0.5 text-sm text-amber-500">
+                            {"★".repeat(review.rating || 0)}
+                            {"☆".repeat(5 - (review.rating || 0))}
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {date && (
+
+                    <span className="shrink-0 text-xs text-ink-400">
+                        {date}
+                    </span>
+
+                )}
+
+            </div>
+
+            <p className="mt-4 text-sm leading-6 text-ink-600">
+                {review.comment}
+            </p>
 
         </div>
     );

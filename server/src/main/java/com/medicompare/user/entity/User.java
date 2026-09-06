@@ -2,6 +2,8 @@ package com.medicompare.user.entity;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(
         name = "users",
@@ -46,6 +48,14 @@ public class User {
             nullable = false
     )
     private boolean enabled = true;
+
+    @Column(
+            length = 255
+    )
+    private String resetToken;
+
+    @Column
+    private Instant resetTokenExpiry;
 
     public User() {
     }
@@ -96,5 +106,21 @@ public class User {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
+    public Instant getResetTokenExpiry() {
+        return resetTokenExpiry;
+    }
+
+    public void setResetTokenExpiry(Instant resetTokenExpiry) {
+        this.resetTokenExpiry = resetTokenExpiry;
     }
 }

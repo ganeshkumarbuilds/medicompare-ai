@@ -1,6 +1,8 @@
 package com.medicompare.user.service;
 
 import com.medicompare.admin.service.JwtService;
+import com.medicompare.user.dto.PasswordResetConfirmRequest;
+import com.medicompare.user.dto.PasswordResetRequest;
 import com.medicompare.user.dto.RegisterRequest;
 import com.medicompare.user.dto.RegisterResponse;
 import com.medicompare.user.dto.UserLoginRequest;
@@ -15,21 +17,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
     public UserService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            JwtService jwtService,
+            EmailService emailService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -247,5 +257,105 @@ public class UserService {
                                 "User not found."
                         )
                 );
+    }
+
+    @Transactional
+    public void requestPasswordReset(
+            PasswordResetRequest request
+    ) {
+
+        if (request == null
+                || request.getEmail() == null
+                || request.getEmail().trim().isEmpty()) {
+            return;
+        }
+
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase();
+
+        User user = userRepository
+                .findByEmailIgnoreCase(email)
+                .orElse(null);
+
+        /*
+         * Always return silently even if the user doesn't exist.
+         * This prevents leaking which emails are registered.
+         */
+        if (user == null) {
+            return;
+        }
+
+        SecureRandom random = new SecureRandom();
+        byte[] tokenBytes = new byte[32];
+        random.nextBytes(tokenBytes);
+
+        String token = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(tokenBytes);
+
+        user.setResetToken(token);
+        user.setResetTokenExpiry(
+                Instant.now().plus(30, ChronoUnit.MINUTES)
+        );
+
+        userRepository.save(user);
+
+        emailService.sendPasswordResetEmail(
+                user.getEmail(),
+                token
+        );
+    }
+
+    @Transactional
+    public void confirmPasswordReset(
+            PasswordResetConfirmRequest request
+    ) {
+
+        if (request == null
+                || request.getToken() == null
+                || request.getToken().isBlank()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reset token is required."
+            );
+        }
+
+        if (request.getNewPassword() == null
+                || request.getNewPassword().length() < 8) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Password must be at least 8 characters."
+            );
+        }
+
+        User user = userRepository
+                .findByResetToken(request.getToken())
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Invalid or expired reset link."
+                        )
+                );
+
+        if (user.getResetTokenExpiry() == null
+                || user.getResetTokenExpiry().isBefore(Instant.now())) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "This reset link has expired. Please request a new one."
+            );
+        }
+
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+
+        userRepository.save(user);
     }
 }

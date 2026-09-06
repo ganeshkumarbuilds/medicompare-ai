@@ -117,9 +117,7 @@ function UserLogin() {
     }
 
     function handleForgotPassword() {
-        setError(
-            "Password recovery will be available soon."
-        );
+        navigate("/forgot-password");
     }
 
     return (
