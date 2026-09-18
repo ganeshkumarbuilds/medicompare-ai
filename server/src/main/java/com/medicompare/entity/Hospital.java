@@ -71,6 +71,14 @@ public class Hospital {
     @Column(length = 1000)
     private String imageUrl;
 
+    /*
+     * TRUE = consultation fee was auto-assigned by seeding and may be
+     * re-jittered for uniqueness. FALSE = an administrator set this
+     * fee explicitly and it must never be touched.
+     */
+    @Column
+    private Boolean feeAutoPriced = true;
+
     public Hospital() {
     }
 
@@ -208,5 +216,13 @@ public class Hospital {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public Boolean getFeeAutoPriced() {
+        return feeAutoPriced;
+    }
+
+    public void setFeeAutoPriced(Boolean feeAutoPriced) {
+        this.feeAutoPriced = feeAutoPriced;
     }
 }

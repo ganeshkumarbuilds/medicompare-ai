@@ -100,6 +100,14 @@ public class HospitalService {
     )
     private Boolean available = true;
 
+    /*
+     * TRUE = price was auto-assigned by seed/migration logic and may
+     * be re-jittered for uniqueness. FALSE = an administrator set
+     * this price explicitly and it must never be touched.
+     */
+    @Column
+    private Boolean autoPriced = true;
+
     // =========================
     // CONSTRUCTOR
     // =========================
@@ -173,5 +181,13 @@ public class HospitalService {
 
     public void setAvailable(Boolean available) {
         this.available = available;
+    }
+
+    public Boolean getAutoPriced() {
+        return autoPriced;
+    }
+
+    public void setAutoPriced(Boolean autoPriced) {
+        this.autoPriced = autoPriced;
     }
 }

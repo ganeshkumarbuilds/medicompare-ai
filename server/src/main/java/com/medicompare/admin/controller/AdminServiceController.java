@@ -135,6 +135,9 @@ public class AdminServiceController {
 
         service.setName(serviceName);
 
+        // Administrator-priced: the uniqueness migration must never touch it.
+        service.setAutoPriced(false);
+
         if (service.getAvailable() == null) {
             service.setAvailable(true);
         }
@@ -227,6 +230,9 @@ public class AdminServiceController {
         existingService.setPrice(
                 updatedService.getPrice()
         );
+
+        // Administrator-priced: the uniqueness migration must never touch it.
+        existingService.setAutoPriced(false);
 
         existingService.setCategory(
                 updatedService.getCategory()

@@ -53,6 +53,9 @@ public class AdminHospitalController {
 
         hospital.setId(null);
 
+        // Administrator-priced fee: the uniqueness migration must never touch it.
+        hospital.setFeeAutoPriced(false);
+
         Hospital savedHospital =
                 hospitalRepository.save(hospital);
 
@@ -121,6 +124,9 @@ public class AdminHospitalController {
                     existingHospital.setLongitude(
                             updatedHospital.getLongitude()
                     );
+
+                    // Administrator-priced fee: the uniqueness migration must never touch it.
+                    existingHospital.setFeeAutoPriced(false);
 
                     Hospital savedHospital =
                             hospitalRepository.save(

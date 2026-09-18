@@ -92,6 +92,9 @@ public class HospitalService {
 
         hospital.setId(null);
 
+        // Explicitly saved fee: the uniqueness migration must never touch it.
+        hospital.setFeeAutoPriced(false);
+
         return hospitalRepository.save(
                 hospital
         );
@@ -165,6 +168,9 @@ public class HospitalService {
         hospital.setLongitude(
                 hospitalDetails.getLongitude()
         );
+
+        // Explicitly saved fee: the uniqueness migration must never touch it.
+        hospital.setFeeAutoPriced(false);
 
         return hospitalRepository.save(
                 hospital

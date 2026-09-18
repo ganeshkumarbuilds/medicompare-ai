@@ -255,6 +255,9 @@ public class HospitalController {
 
         hospital.setId(null);
 
+        // Explicitly saved fee: the uniqueness migration must never touch it.
+        hospital.setFeeAutoPriced(false);
+
         Hospital savedHospital =
                 hospitalRepository.save(hospital);
 
@@ -332,6 +335,9 @@ public class HospitalController {
                     hospital.setLongitude(
                             hospitalDetails.getLongitude()
                     );
+
+                    // Explicitly saved fee: the uniqueness migration must never touch it.
+                    hospital.setFeeAutoPriced(false);
 
                     return ResponseEntity.ok(
                             hospitalRepository.save(
