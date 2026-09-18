@@ -200,29 +200,29 @@ function Register() {
     };
 
     const inputClassName =
-        "h-11 w-full rounded-xl border border-ink-200 bg-white px-3.5 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100";
+        "h-10 w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100";
 
     const labelClassName =
-        "mb-1.5 block text-sm font-semibold text-ink-900";
+        "mb-1 block text-[13px] font-semibold text-ink-900";
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
+        <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-6">
 
-            <div className="w-full max-w-[420px] rounded-2xl border border-ink-200 bg-white p-7 shadow-sm sm:p-8">
+            <div className="w-full max-w-[420px] rounded-2xl border border-ink-200 bg-white p-5 shadow-sm sm:p-6">
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-base font-bold text-white">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-sm font-bold text-white">
                         M
                     </div>
 
                     <div>
 
-                        <div className="text-base font-bold tracking-tight text-ink-900">
+                        <div className="text-sm font-bold tracking-tight text-ink-900">
                             MediCompare
                         </div>
 
-                        <div className="text-xs text-ink-400">
+                        <div className="text-[11px] text-ink-400">
                             Healthcare comparison
                         </div>
 
@@ -230,15 +230,15 @@ function Register() {
 
                 </div>
 
-                <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink-900">
+                <h1 className="mt-4 text-xl font-bold tracking-tight text-ink-900">
                     Create your account
                 </h1>
 
-                <p className="mt-1 text-sm text-ink-500">
+                <p className="mt-0.5 text-[13px] text-ink-500">
                     Compare hospitals, services and prices
                 </p>
 
-                <form onSubmit={handleSubmit} className="mt-6">
+                <form onSubmit={handleSubmit} className="mt-4">
 
                     <div>
 
@@ -262,7 +262,7 @@ function Register() {
 
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-3">
 
                         <label
                             htmlFor="register-email"
@@ -284,60 +284,64 @@ function Register() {
 
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
 
-                        <label
-                            htmlFor="register-password"
-                            className={labelClassName}
-                        >
-                            Password
-                        </label>
+                        <div>
 
-                        <input
-                            id="register-password"
-                            type="password"
-                            name="password"
-                            value={form.password}
-                            onChange={handleChange}
-                            placeholder="Create a strong password"
-                            autoComplete="new-password"
-                            className={inputClassName}
-                        />
+                            <label
+                                htmlFor="register-password"
+                                className={labelClassName}
+                            >
+                                Password
+                            </label>
 
-                        <p className="mt-1.5 text-xs leading-5 text-ink-400">
-                            8+ characters, including uppercase, lowercase and a number.
-                        </p>
+                            <input
+                                id="register-password"
+                                type="password"
+                                name="password"
+                                value={form.password}
+                                onChange={handleChange}
+                                placeholder="Strong password"
+                                autoComplete="new-password"
+                                className={inputClassName}
+                            />
+
+                        </div>
+
+                        <div>
+
+                            <label
+                                htmlFor="register-confirm"
+                                className={labelClassName}
+                            >
+                                Confirm password
+                            </label>
+
+                            <input
+                                id="register-confirm"
+                                type="password"
+                                name="confirmPassword"
+                                value={form.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="Repeat password"
+                                autoComplete="new-password"
+                                className={inputClassName}
+                            />
+
+                        </div>
 
                     </div>
 
-                    <div className="mt-4">
-
-                        <label
-                            htmlFor="register-confirm"
-                            className={labelClassName}
-                        >
-                            Confirm password
-                        </label>
-
-                        <input
-                            id="register-confirm"
-                            type="password"
-                            name="confirmPassword"
-                            value={form.confirmPassword}
-                            onChange={handleChange}
-                            placeholder="Enter your password again"
-                            autoComplete="new-password"
-                            className={inputClassName}
-                        />
-
-                    </div>
+                    <p className="mt-1.5 text-[11px] leading-4 text-ink-400">
+                        8+ characters, including uppercase, lowercase and a number.
+                    </p>
 
                     {message && (
                         <div
                             className={
                                 messageType === "success"
-                                    ? "mt-4 rounded-xl border border-green-200 bg-green-50 px-3.5 py-2.5 text-[13px] text-green-700"
-                                    : "mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700"
+                                    ? "mt-3 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-[13px] text-green-700"
+                                    : "mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700"
                             }
                         >
                             {message}
@@ -347,14 +351,14 @@ function Register() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="mt-5 h-11 w-full rounded-xl bg-brand-500 text-sm font-bold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="mt-4 h-10 w-full rounded-xl bg-brand-500 text-sm font-bold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {loading
                             ? "Creating account..."
                             : "Create account"}
                     </button>
 
-                    <p className="mt-5 text-center text-sm text-ink-500">
+                    <p className="mt-3 text-center text-[13px] text-ink-500">
                         Already have an account?{" "}
 
                         <Link
