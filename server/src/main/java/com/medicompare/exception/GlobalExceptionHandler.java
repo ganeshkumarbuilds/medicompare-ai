@@ -82,6 +82,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(
+            org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(
+            org.springframework.web.HttpRequestMethodNotSupportedException exception,
+            HttpServletRequest request) {
+
+        return buildResponse(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "HTTP method not supported for this endpoint.",
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<Map<String, Object>> handleSecurityException(
             SecurityException exception,
