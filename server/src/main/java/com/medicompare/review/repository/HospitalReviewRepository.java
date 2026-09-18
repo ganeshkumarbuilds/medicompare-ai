@@ -63,4 +63,16 @@ public interface HospitalReviewRepository
             Long hospitalId,
             Integer rating
     );
+
+    /**
+     * Used once by the seed-review cleanup to remove reviews written
+     * by the retired fake reviewer accounts. Real users are untouched.
+     */
+    void deleteByUserId(
+            Long userId
+    );
+
+    long countByUserId(
+            Long userId
+    );
 }

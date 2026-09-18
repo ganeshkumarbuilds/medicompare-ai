@@ -559,6 +559,32 @@ const displayImage =
         : null;
 
 
+/*
+ * Genuine third-party reviews, always live:
+ * opens this exact hospital's Google Maps listing where real
+ * Google ratings and patient reviews can be read and compared.
+ * No Google content is copied — users read it on Google itself.
+ */
+const googleReviewsUrl = (() => {
+
+    const parts = [
+        hospital?.name,
+        hospital?.city,
+        hospital?.state,
+    ].filter(Boolean);
+
+    if (parts.length === 0) {
+        return null;
+    }
+
+    return (
+        "https://www.google.com/maps/search/?api=1&query=" +
+        encodeURIComponent(parts.join(", "))
+    );
+
+})();
+
+
     return (
 
         <div className="min-h-screen bg-[#faf9f7] text-ink-900">
@@ -917,12 +943,26 @@ const displayImage =
                             Ratings & reviews
                         </h2>
 
-                        <p className="mt-2 text-sm leading-6 text-ink-500">
-                            See what patients have shared about their
-                            experience with this hospital.
-                        </p>
+                            <p className="mt-2 text-sm leading-6 text-ink-500">
+                                See what patients have shared about their
+                                experience with this hospital.
+                            </p>
 
-                    </div>
+                            {googleReviewsUrl && (
+                                <a
+                                    href={googleReviewsUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-200 bg-white px-4 py-2 text-xs font-bold text-ink-700 shadow-sm transition hover:border-brand-300 hover:text-brand-700"
+                                >
+                                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-black text-white">
+                                        G
+                                    </span>
+                                    Read Google reviews ↗
+                                </a>
+                            )}
+
+                        </div>
 
 
                     <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
@@ -1121,9 +1161,26 @@ const displayImage =
                                         💬
                                     </div>
 
-                                    <p className="mt-3 text-sm text-ink-500">
-                                        No reviews yet. Be the first to share your experience.
+                                    <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-ink-500">
+                                        No MediCompare patient reviews yet.
+                                        Be the first to share your experience
+                                        — or check real Google ratings below
+                                        while comparing.
                                     </p>
+
+                                    {googleReviewsUrl && (
+                                        <a
+                                            href={googleReviewsUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-ink-900 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-500"
+                                        >
+                                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-black text-white">
+                                                G
+                                            </span>
+                                            Compare on Google reviews ↗
+                                        </a>
+                                    )}
 
                                 </div>
 
