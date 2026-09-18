@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
@@ -58,10 +58,32 @@ function Booking() {
         useState("");
 
     const minimumDate = useMemo(() => {
+        /*
+         * Local calendar date (not UTC): toISOString() can shift
+         * the day backwards in IST evenings and wrongly allow
+         * — or block — dates at the boundary.
+         */
         const today = new Date();
 
-        return today.toISOString().split("T")[0];
+        const year = today.getFullYear();
+        const month = String(
+            today.getMonth() + 1
+        ).padStart(2, "0");
+        const day = String(
+            today.getDate()
+        ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
     }, []);
+
+
+    /*
+     * Sequence guard: slot requests that resolve out of order
+     * must never overwrite a newer selection. Without this,
+     * picking date B while date A's request is still in flight
+     * could display A's slots and wipe a valid time pick.
+     */
+    const slotsRequestRef = useRef(0);
 
 
     /*
@@ -231,6 +253,8 @@ function Booking() {
         date
     ) {
 
+        const requestId = ++slotsRequestRef.current;
+
         try {
 
             setLoadingSlots(true);
@@ -250,6 +274,11 @@ function Booking() {
                     }
                 );
 
+            // A newer request has started — discard this stale result.
+            if (requestId !== slotsRequestRef.current) {
+                return;
+            }
+
             const data =
                 Array.isArray(response.data)
                     ? response.data
@@ -258,6 +287,11 @@ function Booking() {
             setAvailableSlots(data);
 
         } catch (err) {
+
+            // A newer request has started — ignore this stale error too.
+            if (requestId !== slotsRequestRef.current) {
+                return;
+            }
 
             console.error(
                 "Failed to load available slots:",
@@ -278,7 +312,9 @@ function Booking() {
 
         } finally {
 
-            setLoadingSlots(false);
+            if (requestId === slotsRequestRef.current) {
+                setLoadingSlots(false);
+            }
 
         }
     }
@@ -300,10 +336,15 @@ function Booking() {
         );
 
         setSelectedServiceId("");
-        setAppointmentDate("");
         setAppointmentTime("");
         setAvailableSlots([]);
 
+        /*
+         * The chosen date is PRESERVED across hospital changes:
+         * slots simply reload once a service is picked again.
+         * Wiping the date here was the main reason users saw
+         * "Not selected" after making a selection.
+         */
         setMessage("");
         setError("");
 
@@ -1049,6 +1090,7 @@ function Booking() {
 
                             <SummaryItem
                                 label="Hospital"
+                                active={Boolean(selectedHospital)}
                                 value={
                                     selectedHospital?.name ||
                                     "Not selected"
@@ -1072,6 +1114,7 @@ function Booking() {
 
                             <SummaryItem
                                 label="Service"
+                                active={Boolean(selectedService)}
                                 value={
                                     selectedService?.name ||
                                     "Not selected"
@@ -1099,6 +1142,7 @@ function Booking() {
 
                             <SummaryItem
                                 label="Date"
+                                active={Boolean(appointmentDate)}
                                 value={
                                     appointmentDate
                                         ? formatDate(
@@ -1113,6 +1157,7 @@ function Booking() {
 
                             <SummaryItem
                                 label="Time"
+                                active={Boolean(appointmentTime)}
                                 value={
                                     appointmentTime
                                         ? formatTime(
@@ -1157,7 +1202,8 @@ function Booking() {
 
 function SummaryItem({
     label,
-    value
+    value,
+    active = false
 }) {
     return (
         <div>
@@ -1166,7 +1212,14 @@ function SummaryItem({
                 {label}
             </p>
 
-            <p className="mt-1 text-sm font-semibold leading-5 text-ink-800">
+            <p
+                className={`mt-1 text-sm font-semibold leading-5 ${
+                    active
+                        ? "text-green-700"
+                        : "text-ink-800"
+                }`}
+            >
+                {active ? "✓ " : ""}
                 {value}
             </p>
 
