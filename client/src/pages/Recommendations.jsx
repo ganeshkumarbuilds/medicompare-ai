@@ -8,6 +8,13 @@ const SERVICES = [
     "Cardiology Consultation",
     "Dermatology Consultation",
     "Orthopedic Consultation",
+    "Pediatrics Consultation",
+    "Gynecology Consultation",
+    "General Surgery Consultation",
+    "ENT Consultation",
+    "Ophthalmology Consultation",
+    "Emergency & Casualty Care",
+    "Executive Health Checkup",
     "Health Checkup",
 ];
 
