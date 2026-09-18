@@ -98,21 +98,25 @@ const Navbar = () => {
 
             const response =
                 await api.get(
-                    "/notifications"
+                    "/notifications/unread"
                 );
 
-            const data =
+            const all =
                 Array.isArray(response.data)
                     ? response.data
                     : [];
 
-            setNotifications(data);
+            // Only the hospital's response — no submission spam.
+            const data = all.filter(
+                notification =>
+                    notification.type ===
+                        "BOOKING_APPROVED" ||
+                    notification.type ===
+                        "BOOKING_REJECTED"
+            );
 
-            /*
-             * Refresh count as well because the notification
-             * list may have changed.
-             */
-            await loadUnreadCount();
+            setNotifications(data);
+            setUnreadCount(data.length);
 
         } catch (err) {
             console.error(
@@ -162,21 +166,19 @@ const Navbar = () => {
                 `/notifications/${notificationId}/read`
             );
 
+            // Disappear after seen.
             setNotifications(
                 previous =>
-                    previous.map(
+                    previous.filter(
                         notification =>
-                            notification.id ===
+                            notification.id !==
                             notificationId
-                                ? {
-                                      ...notification,
-                                      read: true,
-                                  }
-                                : notification
                     )
             );
 
-            await loadUnreadCount();
+            setUnreadCount(
+                previous => Math.max(0, previous - 1)
+            );
 
         } catch (err) {
             console.error(
@@ -199,16 +201,8 @@ const Navbar = () => {
                 "/notifications/read-all"
             );
 
-            setNotifications(
-                previous =>
-                    previous.map(
-                        notification => ({
-                            ...notification,
-                            read: true,
-                        })
-                    )
-            );
-
+            // Disappear after seen — clear all.
+            setNotifications([]);
             setUnreadCount(0);
 
         } catch (err) {
@@ -229,16 +223,8 @@ const Navbar = () => {
     async function handleNotificationClick(
         notification
     ) {
-        if (!notification.read) {
-            await markAsRead(
-                notification.id
-            );
-        }
+        await markAsRead(notification.id);
 
-        /*
-         * If the notification belongs to a booking,
-         * take the user to the Bookings page.
-         */
         if (notification.bookingId) {
             setShowNotifications(false);
             navigate("/bookings");
@@ -350,25 +336,15 @@ const Navbar = () => {
     function getNotificationTitle(
         type
     ) {
-        switch (type) {
-            case "BOOKING_CREATED":
-                return "Appointment Request";
-
-            case "BOOKING_APPROVED":
-                return "Appointment Approved";
-
-            case "BOOKING_REJECTED":
-                return "Appointment Rejected";
-
-            case "BOOKING_CANCELLED":
-                return "Appointment Cancelled";
-
-            case "BOOKING_COMPLETED":
-                return "Appointment Completed";
-
-            default:
-                return "Notification";
+        if (type === "BOOKING_APPROVED") {
+            return "Appointment Approved";
         }
+
+        if (type === "BOOKING_REJECTED") {
+            return "Appointment Rejected";
+        }
+
+        return "Appointment Update";
     }
 
 
@@ -572,11 +548,7 @@ const Navbar = () => {
                                                             notification
                                                         )
                                                     }
-                                                    className={`w-full border-b border-gray-100 px-5 py-4 text-left transition hover:bg-gray-50 ${
-                                                        !notification.read
-                                                            ? "bg-[#fffaf7]"
-                                                            : "bg-white"
-                                                    }`}
+                                                    className="w-full border-b border-gray-100 bg-[#fffaf7] px-5 py-4 text-left transition hover:bg-gray-50"
                                                 >
 
                                                     <div className="flex gap-3">
@@ -586,26 +558,14 @@ const Navbar = () => {
                                                                 notification.type ===
                                                                 "BOOKING_APPROVED"
                                                                     ? "bg-green-100 text-green-600"
-                                                                    : notification.type ===
-                                                                        "BOOKING_REJECTED"
-                                                                      ? "bg-red-100 text-red-600"
-                                                                      : notification.type ===
-                                                                          "BOOKING_COMPLETED"
-                                                                        ? "bg-blue-100 text-blue-600"
-                                                                        : "bg-[#fdf0eb] text-[#d86f4e]"
+                                                                    : "bg-red-100 text-red-600"
                                                             }`}
                                                         >
                                                             <span className="text-sm font-bold">
                                                                 {notification.type ===
                                                                 "BOOKING_APPROVED"
                                                                     ? "✓"
-                                                                    : notification.type ===
-                                                                        "BOOKING_REJECTED"
-                                                                      ? "!"
-                                                                      : notification.type ===
-                                                                          "BOOKING_COMPLETED"
-                                                                        ? "✓"
-                                                                        : "•"}
+                                                                    : "!"}
                                                             </span>
                                                         </div>
 
@@ -620,9 +580,7 @@ const Navbar = () => {
                                                                     )}
                                                                 </p>
 
-                                                                {!notification.read && (
-                                                                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#d86f4e]" />
-                                                                )}
+                                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#d86f4e]" />
 
                                                             </div>
 

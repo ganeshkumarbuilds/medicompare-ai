@@ -253,14 +253,11 @@ public class BookingService {
 
 
         /*
-         * Notify the user that the booking request
-         * has been successfully submitted.
+         * No notification on submission by design: users only get
+         * notified about the hospital's response (approval or
+         * rejection). A "waiting for approval" alert for every
+         * booking just creates noise.
          */
-        notificationService
-                .createBookingCreatedNotification(
-                        savedBooking
-                );
-
 
         return toResponse(savedBooking);
     }
@@ -496,13 +493,9 @@ public class BookingService {
 
 
         /*
-         * Notify the user that their booking was cancelled.
+         * No notification on user cancellation by design: only
+         * hospital responses (approval / rejection) notify.
          */
-        notificationService
-                .createBookingCancelledNotification(
-                        updatedBooking
-                );
-
 
         return toResponse(updatedBooking);
     }
@@ -677,21 +670,14 @@ public class BookingService {
         );
 
 
-        Booking updatedBooking =
-                bookingRepository.save(booking);
-
+        bookingRepository.save(booking);
 
         /*
-         * Notify the user that the appointment
-         * has been completed.
+         * No notification on completion by design: users only get
+         * notified about approval or rejection.
          */
-        notificationService
-                .createBookingCompletedNotification(
-                        updatedBooking
-                );
 
-
-        return toResponse(updatedBooking);
+        return toResponse(booking);
     }
 
 

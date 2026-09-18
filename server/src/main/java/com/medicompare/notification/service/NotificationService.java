@@ -226,11 +226,13 @@ public class NotificationService {
 
     /*
      * ============================================================
-     * MARK ONE AS READ
+     * MARK ONE AS READ — deletes so it disappears after seen
+     * (requirement: once an approval/rejection is viewed it
+     * must not linger).
      * ============================================================
      */
 
-    public Notification markAsRead(
+    public void markAsRead(
             Long notificationId,
             Long userId
     ) {
@@ -254,17 +256,13 @@ public class NotificationService {
             );
         }
 
-        notification.setRead(true);
-
-        return notificationRepository.save(
-                notification
-        );
+        notificationRepository.delete(notification);
     }
 
 
     /*
      * ============================================================
-     * MARK ALL AS READ
+     * MARK ALL AS READ — deletes all (disappear after seen)
      * ============================================================
      */
 
@@ -273,19 +271,10 @@ public class NotificationService {
     ) {
         List<Notification> notifications =
                 notificationRepository
-                        .findByUserIdAndReadFalseOrderByCreatedAtDesc(
+                        .findByUserIdOrderByCreatedAtDesc(
                                 userId
                         );
 
-        for (
-                Notification notification :
-                notifications
-        ) {
-            notification.setRead(true);
-        }
-
-        notificationRepository.saveAll(
-                notifications
-        );
+        notificationRepository.deleteAll(notifications);
     }
 }
