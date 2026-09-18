@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 public class HospitalImageUrlInitializer {
@@ -64,6 +65,15 @@ public class HospitalImageUrlInitializer {
 
             int updated = 0;
 
+            java.util.Set<String> usedUrls =
+                    hospitals.stream()
+                            .map(Hospital::getImageUrl)
+                            .filter(url ->
+                                    url != null && !url.isBlank())
+                            .collect(java.util.stream.Collectors
+                                    .toCollection(
+                                            java.util.LinkedHashSet::new));
+
             for (int i = 0; i < hospitals.size(); i++) {
 
                 Hospital hospital =
@@ -71,7 +81,7 @@ public class HospitalImageUrlInitializer {
 
                 /*
                  * Keep administrator-uploaded/local images and
-                 * already-seeded genuine Unsplash images.
+                 * already-seeded genuine images.
                  * Only replace blank values or legacy
                  * loremflickr placeholders.
                  */
@@ -85,10 +95,27 @@ public class HospitalImageUrlInitializer {
                     continue;
                 }
 
-                String imageUrl =
-                        HOSPITAL_IMAGES.get(
-                                i % HOSPITAL_IMAGES.size()
-                        );
+                /*
+                 * Pick the first pool image not already used by
+                 * another hospital so new rows never duplicate
+                 * an existing photo. Fall back to rotation only
+                 * when the pool is fully consumed.
+                 */
+                String imageUrl = null;
+
+                for (String candidate : HOSPITAL_IMAGES) {
+                    if (!usedUrls.contains(candidate)) {
+                        imageUrl = candidate;
+                        break;
+                    }
+                }
+
+                if (imageUrl == null) {
+                    imageUrl = HOSPITAL_IMAGES.get(
+                            i % HOSPITAL_IMAGES.size());
+                }
+
+                usedUrls.add(imageUrl);
 
                 hospital.setImageUrl(imageUrl);
 
