@@ -2,6 +2,7 @@ package com.medicompare.review.service;
 
 import com.medicompare.entity.Hospital;
 import com.medicompare.repository.HospitalRepository;
+import com.medicompare.review.dto.ReviewResponse;
 import com.medicompare.review.dto.ReviewSummaryResponse;
 import com.medicompare.review.entity.HospitalReview;
 import com.medicompare.review.repository.HospitalReviewRepository;
@@ -33,7 +34,7 @@ public class HospitalReviewService {
     }
 
     @Transactional
-    public HospitalReview createReview(
+    public ReviewResponse createReview(
             Long userId,
             Long hospitalId,
             Integer rating,
@@ -73,11 +74,12 @@ public class HospitalReviewService {
         review.setRating(rating);
         review.setComment(comment.trim());
 
-        return reviewRepository.save(review);
+        return ReviewResponse.from(
+                reviewRepository.save(review));
     }
 
     @Transactional
-    public HospitalReview updateReview(
+    public ReviewResponse updateReview(
             Long userId,
             Long reviewId,
             Integer rating,
@@ -103,7 +105,8 @@ public class HospitalReviewService {
         review.setRating(rating);
         review.setComment(comment.trim());
 
-        return reviewRepository.save(review);
+        return ReviewResponse.from(
+                reviewRepository.save(review));
     }
 
     @Transactional
@@ -129,8 +132,14 @@ public class HospitalReviewService {
         reviewRepository.delete(review);
     }
 
+    /*
+     * Mapped to DTOs INSIDE the transaction: user/hospital are LAZY
+     * associations and mapping outside the session throws
+     * LazyInitializationException (reviews saved fine but never
+     * displayed). Never return detached entities to the controller.
+     */
     @Transactional(readOnly = true)
-    public List<HospitalReview> getHospitalReviews(
+    public List<ReviewResponse> getHospitalReviews(
             Long hospitalId
     ) {
 
@@ -139,7 +148,10 @@ public class HospitalReviewService {
         return reviewRepository
                 .findByHospitalIdOrderByCreatedAtDesc(
                         hospitalId
-                );
+                )
+                .stream()
+                .map(ReviewResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)

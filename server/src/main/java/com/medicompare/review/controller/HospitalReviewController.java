@@ -3,16 +3,17 @@ package com.medicompare.review.controller;
 import com.medicompare.review.dto.CreateReviewRequest;
 import com.medicompare.review.dto.ReviewResponse;
 import com.medicompare.review.dto.ReviewSummaryResponse;
-import com.medicompare.review.entity.HospitalReview;
 import com.medicompare.review.service.HospitalReviewService;
 import com.medicompare.user.entity.User;
 import com.medicompare.user.repository.UserRepository;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -43,14 +44,8 @@ public class HospitalReviewController {
             @PathVariable Long hospitalId
     ) {
 
-        List<ReviewResponse> reviews =
-                reviewService
-                        .getHospitalReviews(hospitalId)
-                        .stream()
-                        .map(ReviewResponse::from)
-                        .toList();
-
-        return ResponseEntity.ok(reviews);
+        return ResponseEntity.ok(
+                reviewService.getHospitalReviews(hospitalId));
     }
 
 
@@ -95,17 +90,13 @@ public class HospitalReviewController {
         User user =
                 getAuthenticatedUser(authentication);
 
-        HospitalReview review =
+        return ResponseEntity.ok(
                 reviewService.createReview(
                         user.getId(),
                         hospitalId,
                         request.getRating(),
                         request.getComment()
-                );
-
-        return ResponseEntity.ok(
-                ReviewResponse.from(review)
-        );
+                ));
     }
 
 
@@ -125,17 +116,13 @@ public class HospitalReviewController {
         User user =
                 getAuthenticatedUser(authentication);
 
-        HospitalReview review =
+        return ResponseEntity.ok(
                 reviewService.updateReview(
                         user.getId(),
                         reviewId,
                         request.getRating(),
                         request.getComment()
-                );
-
-        return ResponseEntity.ok(
-                ReviewResponse.from(review)
-        );
+                ));
     }
 
 
@@ -179,8 +166,9 @@ public class HospitalReviewController {
                 authentication.getName() == null
         ) {
 
-            throw new IllegalStateException(
-                    "User is not authenticated."
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Please log in to write a review."
             );
         }
 
@@ -190,8 +178,10 @@ public class HospitalReviewController {
         return userRepository
                 .findByEmailIgnoreCase(email)
                 .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Authenticated user not found."
+                        new ResponseStatusException(
+                                HttpStatus.FORBIDDEN,
+                                "Only user accounts can write reviews. "
+                                        + "Please sign in with a user account."
                         )
                 );
     }
