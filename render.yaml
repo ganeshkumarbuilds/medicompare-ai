@@ -2,7 +2,7 @@ services:
   - type: web
     name: medicompare-ai
     runtime: docker
-    repo: https://github.com/your-org/medicompare
+    repo: https://github.com/ganeshkumarbuilds/medicompare-ai
     dockerfilePath: ./server/Dockerfile
     dockerContext: ./server
     plan: free

@@ -8,7 +8,15 @@ import java.util.List;
 
 public interface HospitalServiceRepository extends JpaRepository<HospitalService, Long> {
 
-    List<HospitalService> findByHospitalId(Long hospitalId);
+    @Query("""
+        SELECT hs
+        FROM HospitalService hs
+        LEFT JOIN FETCH hs.hospital
+        WHERE hs.hospital.id = :hospitalId
+        ORDER BY hs.id ASC
+    """)
+    List<HospitalService> findByHospitalId(
+            @Param("hospitalId") Long hospitalId);
 
     long countByAvailableTrue();
 
