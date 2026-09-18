@@ -3,6 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import { API_BASE_URL as API_URL } from "../config";
+import {
+    handleHospitalImageError,
+    resolveHospitalImageUrl,
+} from "../utils/hospitalImage";
 
 function Hospitals() {
 
@@ -1073,23 +1077,14 @@ function UserHospitalCard({
                             "Hospital"
                         }
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                        onError={(event) => {
-
-                            event.currentTarget.style.display =
-                                "none";
-
-                            const fallback =
-                                event.currentTarget.parentElement
-                                    ?.querySelector(
-                                        "[data-image-fallback]"
-                                    );
-
-                            if (fallback) {
-                                fallback.classList.remove(
-                                    "hidden"
-                                );
-                            }
-                        }}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(event) =>
+                            handleHospitalImageError(
+                                event,
+                                hospital?.id
+                            )
+                        }
                     />
 
                 ) : null}
@@ -1671,23 +1666,14 @@ function AdminHospitalCard({
                                 "Hospital"
                             }
                             className="h-full min-h-56 w-full object-cover"
-                            onError={(event) => {
-
-                                event.currentTarget.style.display =
-                                    "none";
-
-                                const fallback =
-                                    event.currentTarget.parentElement
-                                        ?.querySelector(
-                                            "[data-image-fallback]"
-                                        );
-
-                                if (fallback) {
-                                    fallback.classList.remove(
-                                        "hidden"
-                                    );
-                                }
-                            }}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            onError={(event) =>
+                                handleHospitalImageError(
+                                    event,
+                                    hospital?.id
+                                )
+                            }
                         />
 
                     ) : null}

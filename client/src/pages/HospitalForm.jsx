@@ -503,6 +503,8 @@ function HospitalForm() {
                                 src={formData.imageUrl}
                                 alt="Hospital preview"
                                 className="h-64 w-full object-cover"
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
                                 onError={(event) => {
                                     event.currentTarget.style.display =
                                         "none";

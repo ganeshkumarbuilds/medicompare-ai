@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../api/api";
 import { API_BASE_URL as API_URL } from "../config";
+import { handleHospitalImageError } from "../utils/hospitalImage";
 
 function HospitalDetails() {
 
@@ -619,24 +620,14 @@ const displayImage =
                                         "Hospital"
                                     }
                                     className="h-full w-full object-cover"
-                                    onError={(event) => {
-
-                                        event.currentTarget.style.display =
-                                            "none";
-
-                                        const fallback =
-                                            event.currentTarget
-                                                .parentElement
-                                                ?.querySelector(
-                                                    "[data-image-fallback]"
-                                                );
-
-                                        if (fallback) {
-                                            fallback.classList.remove(
-                                                "hidden"
-                                            );
-                                        }
-                                    }}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer"
+                                    onError={(event) =>
+                                        handleHospitalImageError(
+                                            event,
+                                            hospital?.id
+                                        )
+                                    }
                                 />
 
                             ) : null}

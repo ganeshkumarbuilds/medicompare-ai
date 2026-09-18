@@ -665,6 +665,12 @@ function AdminHospitalDetails() {
                                     hospital.name
                                 }
                                 className="h-full w-full object-cover"
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
+                                onError={(event) => {
+                                    event.currentTarget.style.display =
+                                        "none";
+                                }}
                             />
 
                         ) : (

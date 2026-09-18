@@ -1116,6 +1116,8 @@ function AdminImages() {
                                             `${hospital?.name || "Hospital"} image`
                                         }
                                         className="h-64 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer"
                                         onError={(event) => {
 
                                             event.currentTarget.style.display =

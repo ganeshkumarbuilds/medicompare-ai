@@ -98,7 +98,8 @@ public class HospitalRealImageInitializer {
         return map;
     }
 
-    private static List<String> poolImages() {
+    /** Shared with the admin image validator so repaired URLs stay unique. */
+    public static List<String> poolImages() {
         List<String> pool = new ArrayList<>(List.of(
                 "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/Asansol_District_Hospital.jpg/1280px-Asansol_District_Hospital.jpg",
                 "https://upload.wikimedia.org/wikipedia/commons/3/34/Jehangir_Hospital_Building.jpg",

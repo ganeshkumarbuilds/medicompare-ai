@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/api";
 import Navbar from "../components/Navbar";
+import { handleHospitalImageError } from "../utils/hospitalImage";
 
 function Compare() {
     const [hospitals, setHospitals] = useState([]);
@@ -374,6 +375,14 @@ function HospitalSelectionCard({
                         src={hospital.imageUrl}
                         alt={hospital.name}
                         className="h-full w-full object-cover"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(event) =>
+                            handleHospitalImageError(
+                                event,
+                                hospital.id ?? hospital.name
+                            )
+                        }
                     />
                 ) : (
                     <div className="flex h-full items-center justify-center text-5xl">
@@ -514,6 +523,15 @@ function ComparisonTable({ hospitals }) {
                                                             hospital.hospitalName
                                                         }
                                                         className="h-full w-full object-cover"
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer"
+                                                        onError={(event) =>
+                                                            handleHospitalImageError(
+                                                                event,
+                                                                hospital.hospitalId ??
+                                                                    hospital.hospitalName
+                                                            )
+                                                        }
                                                     />
                                                 ) : (
                                                     <div className="flex h-full items-center justify-center">
