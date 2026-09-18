@@ -2,7 +2,7 @@ package com.medicompare.admin.controller;
 
 import com.medicompare.admin.dto.LoginRequest;
 import com.medicompare.admin.dto.LoginResponse;
-import com.medicompare.admin.service.AdminService;
+import com.medicompare.auth.UnifiedLoginService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,17 +16,23 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private final AdminService adminService;
+    private final UnifiedLoginService unifiedLoginService;
 
-    public AuthController(AdminService adminService) {
-        this.adminService = adminService;
+    public AuthController(UnifiedLoginService unifiedLoginService) {
+        this.unifiedLoginService = unifiedLoginService;
     }
 
+    /**
+     * Single login endpoint for the unified login page.
+     * Authenticates against the existing admin accounts first,
+     * then the existing user accounts, and returns the role so the
+     * frontend can open the admin panel or the user app.
+     */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request) {
 
-        LoginResponse response = adminService.login(request);
+        LoginResponse response = unifiedLoginService.login(request);
 
         return ResponseEntity.ok(response);
     }

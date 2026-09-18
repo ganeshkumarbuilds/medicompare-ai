@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
-const API_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:8080";
+import { API_BASE_URL as API_URL } from "../config";
 
 const SERVICES = [
     "General Consultation",
@@ -15,18 +13,38 @@ const SERVICES = [
 
 const CITIES = [
     "Hyderabad",
-    "Bengaluru",
+    "Warangal",
+    "Nizamabad",
+    "Karimnagar",
+    "Khammam",
+    "Vijayawada",
+    "Visakhapatnam",
+    "Guntur",
+    "Mangalagiri",
+    "Tirupati",
+    "Nellore",
+    "Kurnool",
+    "Rajahmundry",
+    "Kakinada",
     "Chennai",
+    "Vellore",
+    "Coimbatore",
+    "Madurai",
+    "Tiruchirappalli",
+    "Salem",
+    "Erode",
+    "Bengaluru",
+    "Mysuru",
+    "Mangaluru",
+    "Hubballi",
+    "Belagavi",
     "Mumbai",
     "Pune",
     "Delhi",
-    "Vijayawada",
-    "Visakhapatnam",
     "Kolkata",
     "Ahmedabad",
     "Jaipur",
     "Kochi",
-    "Coimbatore",
     "Lucknow",
     "Bhubaneswar",
 ];

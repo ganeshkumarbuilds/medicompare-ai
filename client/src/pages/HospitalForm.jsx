@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AdminLayout from "../components/AdminLayout";
+import { API_BASE_URL as API_URL } from "../config";
 
 
 function HospitalForm() {
@@ -85,7 +86,7 @@ function HospitalForm() {
 
 
             await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/admin/hospitals`,
+                `${API_URL}/api/admin/hospitals`,
                 hospitalData,
                 {
                     headers: {

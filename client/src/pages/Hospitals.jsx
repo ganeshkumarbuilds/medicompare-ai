@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL as API_URL } from "../config";
 
 function Hospitals() {
 
@@ -20,7 +19,101 @@ function Hospitals() {
 
     const [search, setSearch] = useState("");
     const [city, setCity] = useState("");
+    const [stateFilter, setStateFilter] = useState("");
     const [hospitalType, setHospitalType] = useState("");
+
+    const [userLocation, setUserLocation] = useState(null);
+    const [locationLoading, setLocationLoading] = useState(false);
+    const [locationError, setLocationError] = useState("");
+    const [nearbyOnly, setNearbyOnly] = useState(false);
+    const [radiusKm, setRadiusKm] = useState(25);
+
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        if (
+            lat1 == null || lon1 == null ||
+            lat2 == null || lon2 == null
+        ) {
+            return null;
+        }
+
+        const toRad = (value) => (value * Math.PI) / 180;
+        const earthRadiusKm = 6371;
+
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) *
+                Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
+
+        return (
+            earthRadiusKm *
+            2 *
+            Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        );
+    }
+
+
+    function requestUserLocation() {
+        if (!navigator.geolocation) {
+            setLocationError(
+                "Geolocation is not supported by your browser."
+            );
+            return;
+        }
+
+        setLocationLoading(true);
+        setLocationError("");
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setUserLocation([
+                    position.coords.latitude,
+                    position.coords.longitude,
+                ]);
+                setNearbyOnly(true);
+                setLocationLoading(false);
+            },
+            () => {
+                setLocationLoading(false);
+                setLocationError(
+                    "Unable to access your location. Please allow location permission in your browser."
+                );
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000,
+            }
+        );
+    }
+
+
+    function distanceForHospital(hospital) {
+        if (!userLocation) {
+            return null;
+        }
+
+        const lat =
+            hospital.latitude ?? hospital.lat ?? null;
+        const lng =
+            hospital.longitude ?? hospital.lng ?? null;
+
+        if (lat == null || lng == null) {
+            return null;
+        }
+
+        return haversineKm(
+            userLocation[0],
+            userLocation[1],
+            Number(lat),
+            Number(lng)
+        );
+    }
 
 
     useEffect(() => {
@@ -28,7 +121,7 @@ function Hospitals() {
     }, []);
 
 
-    async function fetchHospitals() {
+    async function fetchHospitals(retryCount = 0) {
 
         try {
 
@@ -36,7 +129,8 @@ function Hospitals() {
             setError("");
 
             const response = await fetch(
-                `${API_URL}/api/hospitals?size=100`
+                `${API_URL}/api/hospitals?size=200`,
+                { signal: AbortSignal.timeout(30000) }
             );
 
             if (!response.ok) {
@@ -56,12 +150,20 @@ function Hospitals() {
 
 
             /*
-             * Load the primary uploaded image
-             * for every hospital.
+             * Load the primary uploaded image only for hospitals
+             * that don't already ship an imageUrl in the payload.
+             * This avoids up to ~200 extra requests on every page
+             * load (the main reason the post-login landing felt slow).
              */
+            const hospitalsNeedingImages = hospitalList.filter(
+                (hospital) =>
+                    !hospital.imageUrl ||
+                    !hospital.imageUrl.trim()
+            );
+
             const imageEntries = await Promise.all(
 
-                hospitalList.map(async (hospital) => {
+                hospitalsNeedingImages.map(async (hospital) => {
 
                     try {
 
@@ -128,8 +230,18 @@ function Hospitals() {
                 err
             );
 
+            // Render free tier sleeps: retry once after a short wait
+            // so a cold backend still loads instead of showing an error.
+            if (retryCount < 1) {
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 4000)
+                );
+
+                return fetchHospitals(retryCount + 1);
+            }
+
             setError(
-                "Unable to load hospitals. Please try again."
+                "Unable to reach the server. The backend may be waking up — please press Retry in a few seconds."
             );
 
         } finally {
@@ -140,12 +252,12 @@ function Hospitals() {
     }
 
 
-    const cities = useMemo(() => {
+    const states = useMemo(() => {
 
         return [
             ...new Set(
                 hospitals
-                    .map(hospital => hospital.city)
+                    .map(hospital => hospital.state)
                     .filter(Boolean)
             )
         ].sort((a, b) =>
@@ -153,6 +265,29 @@ function Hospitals() {
         );
 
     }, [hospitals]);
+
+
+    const cities = useMemo(() => {
+
+        const inState = stateFilter
+            ? hospitals.filter(
+                hospital =>
+                    hospital.state?.toLowerCase() ===
+                    stateFilter.toLowerCase()
+            )
+            : hospitals;
+
+        return [
+            ...new Set(
+                inState
+                    .map(hospital => hospital.city)
+                    .filter(Boolean)
+            )
+        ].sort((a, b) =>
+            a.localeCompare(b)
+        );
+
+    }, [hospitals, stateFilter]);
 
 
     const types = useMemo(() => {
@@ -175,11 +310,17 @@ function Hospitals() {
         const normalizedSearch =
             search.trim().toLowerCase();
 
-        return hospitals.filter(hospital => {
+        const withDistance = hospitals.map(hospital => ({
+            hospital,
+            distanceKm: distanceForHospital(hospital),
+        }));
+
+        const filtered = withDistance.filter(({ hospital, distanceKm }) => {
 
             const searchableText = [
                 hospital.name,
                 hospital.city,
+                hospital.state,
                 hospital.address,
                 hospital.location,
                 hospital.hospitalType
@@ -202,25 +343,57 @@ function Hospitals() {
                     city.toLowerCase();
 
 
+            const matchesState =
+                !stateFilter ||
+                hospital.state?.toLowerCase() ===
+                    stateFilter.toLowerCase();
+
+
             const matchesType =
                 !hospitalType ||
                 hospital.hospitalType?.toLowerCase() ===
                     hospitalType.toLowerCase();
 
 
+            const matchesNearby =
+                !nearbyOnly ||
+                !userLocation ||
+                (distanceKm != null &&
+                    distanceKm <= radiusKm);
+
             return (
                 matchesSearch &&
                 matchesCity &&
-                matchesType
+                matchesState &&
+                matchesType &&
+                matchesNearby
             );
 
         });
+
+        // Nearest first when location is known
+        if (userLocation) {
+            filtered.sort((a, b) => {
+                if (a.distanceKm == null) return 1;
+                if (b.distanceKm == null) return -1;
+                return a.distanceKm - b.distanceKm;
+            });
+        }
+
+        return filtered.map(entry => ({
+            ...entry.hospital,
+            _distanceKm: entry.distanceKm,
+        }));
 
     }, [
         hospitals,
         search,
         city,
-        hospitalType
+        stateFilter,
+        hospitalType,
+        userLocation,
+        nearbyOnly,
+        radiusKm
     ]);
 
 
@@ -228,7 +401,9 @@ function Hospitals() {
 
         setSearch("");
         setCity("");
+        setStateFilter("");
         setHospitalType("");
+        setNearbyOnly(false);
 
     }
 
@@ -301,9 +476,12 @@ function Hospitals() {
                 setSearch={setSearch}
                 city={city}
                 setCity={setCity}
+                stateFilter={stateFilter}
+                setStateFilter={setStateFilter}
                 hospitalType={hospitalType}
                 setHospitalType={setHospitalType}
                 cities={cities}
+                states={states}
                 types={types}
                 clearFilters={clearFilters}
                 fetchHospitals={fetchHospitals}
@@ -327,14 +505,25 @@ function Hospitals() {
             setSearch={setSearch}
             city={city}
             setCity={setCity}
+            stateFilter={stateFilter}
+            setStateFilter={setStateFilter}
             hospitalType={hospitalType}
             setHospitalType={setHospitalType}
             cities={cities}
+            states={states}
             types={types}
             clearFilters={clearFilters}
             fetchHospitals={fetchHospitals}
             navigate={navigate}
             handleHospitalView={handleHospitalView}
+            userLocation={userLocation}
+            locationLoading={locationLoading}
+            locationError={locationError}
+            nearbyOnly={nearbyOnly}
+            setNearbyOnly={setNearbyOnly}
+            radiusKm={radiusKm}
+            setRadiusKm={setRadiusKm}
+            requestUserLocation={requestUserLocation}
         />
     );
 }
@@ -356,13 +545,24 @@ function UserHospitalsPage({
     setSearch,
     city,
     setCity,
+    stateFilter,
+    setStateFilter,
     hospitalType,
     setHospitalType,
     cities,
+    states,
     types,
     clearFilters,
     fetchHospitals,
-    handleHospitalView
+    handleHospitalView,
+    userLocation,
+    locationLoading,
+    locationError,
+    nearbyOnly,
+    setNearbyOnly,
+    radiusKm,
+    setRadiusKm,
+    requestUserLocation
 
 }) {
 
@@ -418,9 +618,9 @@ function UserHospitalsPage({
 
                 {/* FILTERS */}
 
-                <section className="mb-12 rounded-3xl border border-ink-200 bg-white p-6 shadow-sm">
+                <section className="mb-6 rounded-3xl border border-ink-200 bg-white p-6 shadow-sm">
 
-                    <div className="grid gap-5 lg:grid-cols-[2fr_1fr_1fr_auto]">
+                    <div className="grid gap-5 lg:grid-cols-[2fr_1fr_1fr_1fr]">
 
 
                         {/* SEARCH */}
@@ -494,6 +694,51 @@ function UserHospitalsPage({
                         </div>
 
 
+                        {/* STATE */}
+
+                        <div>
+
+                            <label
+                                htmlFor="hospital-state"
+                                className="mb-2 block text-sm font-semibold text-ink-900"
+                            >
+                                State
+                            </label>
+
+                            <select
+                                id="hospital-state"
+                                value={stateFilter}
+                                onChange={(event) => {
+                                    setStateFilter(
+                                        event.target.value
+                                    );
+                                    setCity("");
+                                }}
+                                className="h-14 w-full rounded-xl border border-ink-200 bg-white px-4 text-base text-ink-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+                            >
+
+                                <option value="">
+                                    All states
+                                </option>
+
+                                {states.map(
+                                    currentState => (
+
+                                        <option
+                                            key={currentState}
+                                            value={currentState}
+                                        >
+                                            {currentState}
+                                        </option>
+
+                                    )
+                                )}
+
+                            </select>
+
+                        </div>
+
+
                         {/* TYPE */}
 
                         <div>
@@ -538,20 +783,92 @@ function UserHospitalsPage({
                         </div>
 
 
-                        {/* CLEAR */}
+                    </div>
 
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            disabled={
-                                !search &&
-                                !city &&
-                                !hospitalType
-                            }
-                            className="h-14 self-end rounded-xl border border-ink-200 bg-white px-6 text-sm font-medium text-ink-600 transition hover:border-ink-300 hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            Clear
-                        </button>
+
+                    {/* LOCATION / NEARBY ROW */}
+
+                    <div className="mt-5 flex flex-col gap-4 rounded-2xl bg-ink-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+                        <div className="flex flex-wrap items-center gap-3">
+
+                            <button
+                                type="button"
+                                onClick={requestUserLocation}
+                                disabled={locationLoading}
+                                className="rounded-xl bg-ink-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {locationLoading
+                                    ? "Finding you..."
+                                    : userLocation
+                                        ? "📍 Location enabled — refresh"
+                                        : "📍 Use my location"}
+                            </button>
+
+                            {userLocation && (
+                                <label className="flex items-center gap-2 text-sm font-medium text-ink-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={nearbyOnly}
+                                        onChange={(event) =>
+                                            setNearbyOnly(
+                                                event.target.checked
+                                            )
+                                        }
+                                        className="h-4 w-4 accent-brand-500"
+                                    />
+                                    Nearby only
+                                </label>
+                            )}
+
+                            {userLocation && nearbyOnly && (
+                                <select
+                                    value={radiusKm}
+                                    onChange={(event) =>
+                                        setRadiusKm(
+                                            Number(event.target.value)
+                                        )
+                                    }
+                                    className="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500"
+                                >
+                                    <option value={10}>Within 10 km</option>
+                                    <option value={25}>Within 25 km</option>
+                                    <option value={50}>Within 50 km</option>
+                                    <option value={100}>Within 100 km</option>
+                                    <option value={300}>Within 300 km</option>
+                                </select>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={clearFilters}
+                                disabled={
+                                    !search &&
+                                    !city &&
+                                    !stateFilter &&
+                                    !hospitalType &&
+                                    !nearbyOnly
+                                }
+                                className="rounded-xl border border-ink-200 bg-white px-5 py-3 text-sm font-medium text-ink-600 transition hover:border-ink-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Clear
+                            </button>
+
+                        </div>
+
+                        {locationError ? (
+                            <p className="text-xs font-medium text-red-600">
+                                {locationError}
+                            </p>
+                        ) : userLocation ? (
+                            <p className="text-xs font-medium text-green-700">
+                                Showing nearest hospitals first, with distance badges.
+                            </p>
+                        ) : (
+                            <p className="text-xs text-ink-500">
+                                Allow location access to find hospitals near you across AP, Telangana, TN & Karnataka.
+                            </p>
+                        )}
 
                     </div>
 
@@ -591,7 +908,7 @@ function UserHospitalsPage({
 
                             <button
                                 type="button"
-                                onClick={fetchHospitals}
+                                onClick={() => fetchHospitals()}
                                 className="font-semibold underline"
                             >
                                 Retry
@@ -671,6 +988,9 @@ function UserHospitalsPage({
                                                     hospital.id
                                                 ]
                                             }
+                                            distanceKm={
+                                                hospital._distanceKm ?? null
+                                            }
                                             onView={() =>
                                                 handleHospitalView(
                                                     hospital.id
@@ -703,6 +1023,7 @@ function UserHospitalsPage({
 function UserHospitalCard({
     hospital,
     primaryImage,
+    distanceKm,
     onView
 }) {
 
@@ -816,6 +1137,17 @@ function UserHospitalCard({
                 )}
 
 
+                {/* DISTANCE BADGE */}
+
+                {distanceKm != null && (
+                    <div className="absolute bottom-3 right-3 rounded-full bg-ink-900/90 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm backdrop-blur-sm">
+                        {distanceKm < 1
+                            ? `${Math.round(distanceKm * 1000)} m away`
+                            : `${distanceKm.toFixed(1)} km away`}
+                    </div>
+                )}
+
+
                 {/* NAME — overlaid at bottom of image */}
 
                 <div className="absolute inset-x-0 bottom-0 p-4">
@@ -829,6 +1161,9 @@ function UserHospitalCard({
                         <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-white/90 drop-shadow-sm">
                             <span>📍</span>
                             {hospital.city}
+                            {hospital.state
+                                ? `, ${hospital.state}`
+                                : ""}
                         </p>
 
                     )}
@@ -923,9 +1258,12 @@ function AdminHospitalsPage({
     setSearch,
     city,
     setCity,
+    stateFilter,
+    setStateFilter,
     hospitalType,
     setHospitalType,
     cities,
+    states = [],
     types,
     clearFilters,
     fetchHospitals,

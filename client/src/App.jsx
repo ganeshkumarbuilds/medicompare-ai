@@ -9,7 +9,6 @@ import Home from "./pages/Home";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import AdminLogin from "./pages/AdminLogin";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminBookings from "./pages/AdminBookings";
@@ -76,9 +75,13 @@ function App() {
 
                 <Route path="/register" element={<Register />} />
 
+                {/*
+                    Legacy admin bookmark: the login page is now
+                    unified, so admins sign in through /login too.
+                */}
                 <Route
                     path="/admin/login"
-                    element={<AdminLogin />}
+                    element={<Login />}
                 />
 
 

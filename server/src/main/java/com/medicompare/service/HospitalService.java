@@ -28,6 +28,7 @@ public class HospitalService {
     public Page<Hospital> searchHospitals(
             String search,
             String city,
+            String state,
             String hospitalType,
             Double minRating,
             Double maxFee,
@@ -38,11 +39,27 @@ public class HospitalService {
                 HospitalSpecification.filter(
                         search,
                         city,
+                        state,
                         hospitalType,
                         minRating,
                         maxFee
                 ),
                 pageable
+        );
+    }
+
+    /** Backwards-compatible overload (no state filter). */
+    public Page<Hospital> searchHospitals(
+            String search,
+            String city,
+            String hospitalType,
+            Double minRating,
+            Double maxFee,
+            Pageable pageable
+    ) {
+        return searchHospitals(
+                search, city, null, hospitalType,
+                minRating, maxFee, pageable
         );
     }
 
@@ -135,6 +152,18 @@ public class HospitalService {
         hospital.setImageUrl(
                 hospitalDetails
                         .getImageUrl()
+        );
+
+        hospital.setState(
+                hospitalDetails.getState()
+        );
+
+        hospital.setLatitude(
+                hospitalDetails.getLatitude()
+        );
+
+        hospital.setLongitude(
+                hospitalDetails.getLongitude()
         );
 
         return hospitalRepository.save(

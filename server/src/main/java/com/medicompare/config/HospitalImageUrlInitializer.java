@@ -6,6 +6,7 @@ import com.medicompare.repository.HospitalRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 import java.util.List;
 
@@ -13,123 +14,41 @@ import java.util.List;
 public class HospitalImageUrlInitializer {
 
     /*
-     * Each demo hospital receives a different hospital/medical-building
-     * image URL.
-     *
-     * These are representative healthcare facility photographs.
-     * They are NOT claimed to be the actual buildings of the fictional
-     * demo hospitals in MediCompare.
-     *
-     * Administrator-uploaded images are preserved because this initializer
-     * only replaces the old generated image URLs used by this initializer.
+     * Genuine, stable healthcare-facility photographs (Unsplash).
+     * Representative photos — not claimed to be the exact building
+     * of each hospital. Administrator-uploaded images and seeded
+     * Unsplash images are always preserved; only blank or legacy
+     * loremflickr placeholders are replaced.
      */
+    private static final String P =
+            "?auto=format&fit=crop&w=1200&q=70";
+
     private static final List<String> HOSPITAL_IMAGES = List.of(
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=101",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=102",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=103",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=104",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=105",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=106",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=107",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=108",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=109",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=110",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=111",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=112",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=113",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=114",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=115",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=116",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=117",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=118",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=119",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=120",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=121",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=122",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=123",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=124",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=125",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=126",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=127",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=128",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=129",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=130",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=131",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=132",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=133",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=134",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=135",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=136",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=137",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=138",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=139",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=140",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=141",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=142",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=143",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=144",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=145",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=146",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=147",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=148",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=149",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=150",
-
-            "https://loremflickr.com/1200/800/hospital,building?lock=151"
+            "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d" + P,
+            "https://images.unsplash.com/photo-1586773860418-d37222d8fce3" + P,
+            "https://images.unsplash.com/photo-1516549655169-df83a0774514" + P,
+            "https://images.unsplash.com/photo-1538108149393-fbbd81895907" + P,
+            "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d" + P,
+            "https://images.unsplash.com/photo-1579684385127-1ef15d508118" + P,
+            "https://images.unsplash.com/photo-1551601651-2a8555f1a136" + P,
+            "https://images.unsplash.com/photo-1551190822-a9333d879b1f" + P,
+            "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133" + P,
+            "https://images.unsplash.com/photo-1629909613654-28e377c37b09" + P,
+            "https://images.unsplash.com/photo-1512678080530-7760d81faba6" + P,
+            "https://images.unsplash.com/photo-1538805060514-97d9cc17730c" + P,
+            "https://images.unsplash.com/photo-1666214280557-f1b5022eb634" + P,
+            "https://images.unsplash.com/photo-1551076805-e1869033e561" + P,
+            "https://images.unsplash.com/photo-1516574187841-c49cc3c12f46" + P,
+            "https://images.unsplash.com/photo-1504439468489-c8920d796a29" + P,
+            "https://images.unsplash.com/photo-1519494080410-f9aa76cb4283" + P,
+            "https://images.unsplash.com/photo-1587854692152-cbe660dbde88" + P,
+            "https://images.unsplash.com/photo-1583324113626-70df0f4deaab" + P,
+            "https://images.unsplash.com/photo-1576091160550-2173dba999ef" + P
     );
 
 
     @Bean
+    @Order(30)
     CommandLineRunner assignHospitalImages(
             HospitalRepository hospitalRepository
     ) {
@@ -151,17 +70,16 @@ public class HospitalImageUrlInitializer {
                         hospitals.get(i);
 
                 /*
-                 * Keep administrator-uploaded/local images.
-                 *
-                 * We only replace the old Unsplash URLs generated
-                 * by the previous initializer.
+                 * Keep administrator-uploaded/local images and
+                 * already-seeded genuine Unsplash images.
+                 * Only replace blank values or legacy
+                 * loremflickr placeholders.
                  */
                 String currentImage =
                         hospital.getImageUrl();
 
                 if (currentImage != null
                         && !currentImage.isBlank()
-                        && !currentImage.contains("images.unsplash.com")
                         && !currentImage.contains("loremflickr.com")) {
 
                     continue;

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { API_BASE_URL } from "../config";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/api`;
+const API_URL = `${API_BASE_URL}/api`;
 const BookingStatus = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);

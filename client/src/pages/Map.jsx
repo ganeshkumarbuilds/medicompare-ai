@@ -503,7 +503,7 @@ function Map() {
 
                 const response =
     await api.get(
-        "/hospitals?size=100"
+        "/hospitals?size=200"
     );
 
                 const data =
@@ -589,8 +589,44 @@ function Map() {
         }, [hospitals]);
 
 
+    const [nearbyOnly, setNearbyOnly] = useState(false);
+    const [radiusKm, setRadiusKm] = useState(50);
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+            return null;
+        }
+        const toRad = (value) => (value * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) *
+                Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
+        return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function distanceForHospital(hospital) {
+        if (!userLocation) {
+            return null;
+        }
+        const lat = hospital.latitude ?? hospital.lat ?? null;
+        const lng = hospital.longitude ?? hospital.lng ?? null;
+        if (lat == null || lng == null) {
+            return null;
+        }
+        return haversineKm(
+            userLocation[0],
+            userLocation[1],
+            Number(lat),
+            Number(lng)
+        );
+    }
+
     // ========================================================
-    // FILTER
+    // FILTER (search + nearby, nearest first when located)
     // ========================================================
 
     const filteredHospitals =
@@ -599,44 +635,76 @@ function Map() {
             const query =
                 search.trim().toLowerCase();
 
-            if (!query) {
-                return hospitals;
+            let list = hospitals;
+
+            if (query) {
+                list = list.filter(
+                    (hospital) => {
+
+                        const haystack = [
+                            hospital.name,
+                            hospital.city,
+                            hospital.state,
+                            hospital.address,
+                            hospital.hospitalType,
+                        ]
+                            .filter(Boolean)
+                            .join(" ")
+                            .toLowerCase();
+
+                        return haystack.includes(query);
+
+                    }
+                );
             }
 
-            return hospitals.filter(
-                (hospital) => {
-
-                    const name =
-                        hospital.name || "";
-
-                    const city =
-                        hospital.city || "";
-
-                    const address =
-                        hospital.address || "";
-
-                    const type =
-                        hospital.hospitalType || "";
-
-                    return (
-                        name
-                            .toLowerCase()
-                            .includes(query) ||
-                        city
-                            .toLowerCase()
-                            .includes(query) ||
-                        address
-                            .toLowerCase()
-                            .includes(query) ||
-                        type
-                            .toLowerCase()
-                            .includes(query)
+            if (nearbyOnly && userLocation) {
+                list = list.filter((hospital) => {
+                    const distance = haversineKm(
+                        userLocation[0],
+                        userLocation[1],
+                        Number(
+                            hospital.latitude ??
+                                hospital.lat ??
+                                NaN
+                        ),
+                        Number(
+                            hospital.longitude ??
+                                hospital.lng ??
+                                NaN
+                        )
                     );
+                    return (
+                        distance != null &&
+                        !Number.isNaN(distance) &&
+                        distance <= radiusKm
+                    );
+                });
+            }
 
-                }
-            );
+            if (userLocation) {
+                list = [...list].sort((a, b) => {
+                    const da = haversineKm(
+                        userLocation[0],
+                        userLocation[1],
+                        Number(a.latitude ?? a.lat ?? NaN),
+                        Number(a.longitude ?? a.lng ?? NaN)
+                    );
+                    const db = haversineKm(
+                        userLocation[0],
+                        userLocation[1],
+                        Number(b.latitude ?? b.lat ?? NaN),
+                        Number(b.longitude ?? b.lng ?? NaN)
+                    );
+                    if (da == null || Number.isNaN(da)) return 1;
+                    if (db == null || Number.isNaN(db)) return -1;
+                    return da - db;
+                });
+            }
 
-        }, [hospitals, search]);
+            return list;
+
+        }, [hospitals, search, nearbyOnly, radiusKm, userLocation]);
 
 
     // ========================================================
@@ -938,11 +1006,50 @@ function Map() {
                                         event.target.value
                                     )
                                 }
-                                placeholder="Search hospital, city or address..."
+                                placeholder="Search hospital, city, state or address..."
                                 className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                             />
 
                         </div>
+
+
+                        {userLocation && (
+                            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-ink-50 p-3">
+                                <label className="flex items-center gap-2 text-xs font-semibold text-ink-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={nearbyOnly}
+                                        onChange={(event) =>
+                                            setNearbyOnly(
+                                                event.target.checked
+                                            )
+                                        }
+                                        className="h-4 w-4 accent-brand-500"
+                                    />
+                                    Nearby only
+                                </label>
+
+                                <select
+                                    value={radiusKm}
+                                    onChange={(event) =>
+                                        setRadiusKm(
+                                            Number(event.target.value)
+                                        )
+                                    }
+                                    className="rounded-xl border border-ink-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-brand-400"
+                                >
+                                    <option value={10}>10 km</option>
+                                    <option value={25}>25 km</option>
+                                    <option value={50}>50 km</option>
+                                    <option value={100}>100 km</option>
+                                    <option value={300}>300 km</option>
+                                </select>
+
+                                <span className="text-[11px] text-ink-500">
+                                    Sorted nearest first
+                                </span>
+                            </div>
+                        )}
 
 
                         <div className="mb-4 flex items-center justify-between">
@@ -994,6 +1101,11 @@ function Map() {
                                             selectedHospital?.id ===
                                             hospital.id;
 
+                                        const distanceKm =
+                                            distanceForHospital(
+                                                hospital
+                                            );
+
                                         return (
 
                                             <button
@@ -1023,10 +1135,23 @@ function Map() {
                                                         </h3>
 
                                                         <p className="mt-1 text-xs text-ink-500">
-                                                            {hospital.city ||
+                                                            {[
+                                                                hospital.city,
+                                                                hospital.state,
+                                                            ]
+                                                                .filter(Boolean)
+                                                                .join(", ") ||
                                                                 hospital.address ||
                                                                 "Location unavailable"}
                                                         </p>
+
+                                                        {distanceKm != null && (
+                                                            <p className="mt-1 text-[11px] font-bold text-brand-600">
+                                                                {distanceKm < 1
+                                                                    ? `${Math.round(distanceKm * 1000)} m away`
+                                                                    : `${distanceKm.toFixed(1)} km away`}
+                                                            </p>
+                                                        )}
 
                                                     </div>
 

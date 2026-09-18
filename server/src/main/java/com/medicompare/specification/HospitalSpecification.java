@@ -15,6 +15,7 @@ public class HospitalSpecification {
     public static Specification<Hospital> filter(
             String search,
             String city,
+            String state,
             String hospitalType,
             Double minRating,
             Double maxFee
@@ -38,10 +39,22 @@ public class HospitalSpecification {
                         keyword
                 );
 
+                Predicate cityMatch = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("city")),
+                        keyword
+                );
+
+                Predicate stateMatch = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("state")),
+                        keyword
+                );
+
                 predicates.add(
                         criteriaBuilder.or(
                                 nameMatch,
-                                descriptionMatch
+                                descriptionMatch,
+                                cityMatch,
+                                stateMatch
                         )
                 );
             }
@@ -52,6 +65,16 @@ public class HospitalSpecification {
                         criteriaBuilder.equal(
                                 criteriaBuilder.lower(root.get("city")),
                                 city.toLowerCase()
+                        )
+                );
+            }
+
+            if (state != null && !state.isBlank()) {
+
+                predicates.add(
+                        criteriaBuilder.equal(
+                                criteriaBuilder.lower(root.get("state")),
+                                state.toLowerCase()
                         )
                 );
             }

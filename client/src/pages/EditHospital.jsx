@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import AdminLayout from "../components/AdminLayout";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_BASE_URL as API_URL } from "../config";
 
 function EditHospital() {
 
@@ -53,7 +52,7 @@ function EditHospital() {
 
 
             const response = await axios.get(
-                `${API_BASE_URL}/api/admin/hospitals/${id}`,
+                `${API_URL}/api/admin/hospitals/${id}`,
                 {
                     headers: {
                         Authorization:
@@ -265,7 +264,7 @@ function EditHospital() {
 
 
             await axios.put(
-                `${API_BASE_URL}/api/admin/hospitals/${id}`,
+                `${API_URL}/api/admin/hospitals/${id}`,
                 payload,
                 {
                     headers: {

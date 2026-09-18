@@ -11,4 +11,8 @@ public interface HospitalRepository
                 JpaSpecificationExecutor<Hospital> {
 
     List<Hospital> findByCityIgnoreCase(String city);
+
+    List<Hospital> findByStateIgnoreCase(String state);
+
+    List<Hospital> findByNameIgnoreCaseAndCityIgnoreCase(String name, String city);
 }

@@ -76,16 +76,17 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> origins = new java.util.ArrayList<>(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
+        List<String> patterns = new java.util.ArrayList<>(List.of(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://*.vercel.app",
             "https://client-iota-one-53.vercel.app"
         ));
-        if (frontendUrl != null && !frontendUrl.isBlank() && !origins.contains(frontendUrl)) {
-            origins.add(frontendUrl);
+        if (frontendUrl != null && !frontendUrl.isBlank() && !patterns.contains(frontendUrl)) {
+            patterns.add(frontendUrl);
         }
 
-        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedOriginPatterns(patterns);
 
         configuration.setAllowedMethods(
             List.of(

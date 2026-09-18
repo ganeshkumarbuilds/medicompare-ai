@@ -108,7 +108,7 @@ function Home() {
 
                     <div className="pointer-events-none absolute left-1/2 top-20 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-brand-100/60 blur-3xl" />
 
-                    <div className="relative mx-auto max-w-7xl px-6 pb-20 pt-20 sm:pb-28 sm:pt-28 lg:pt-32">
+                    <div className="relative mx-auto max-w-7xl px-6 pb-12 pt-12 sm:pb-16 sm:pt-16">
 
 
                         {/* Small badge */}
@@ -128,9 +128,9 @@ function Home() {
 
                         {/* Main heading */}
 
-                        <div className="mx-auto mt-8 max-w-5xl text-center">
+                        <div className="mx-auto mt-6 max-w-5xl text-center">
 
-                            <h1 className="text-5xl font-black leading-[1.02] tracking-[-0.04em] text-ink-900 sm:text-6xl lg:text-7xl">
+                            <h1 className="text-4xl font-black leading-[1.05] tracking-[-0.03em] text-ink-900 sm:text-5xl lg:text-6xl">
 
                                 Compare healthcare.
 
@@ -143,11 +143,12 @@ function Home() {
                             </h1>
 
 
-                            <p className="mx-auto mt-7 max-w-2xl text-base leading-7 text-ink-500 sm:text-lg sm:leading-8">
+                            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-ink-500 sm:text-lg sm:leading-8">
 
-                                Find hospitals, compare healthcare services
-                                and prices, explore patient reviews, get
-                                AI-powered recommendations, and book
+                                Find nearby hospitals across AP, Telangana,
+                                Tamil Nadu & Karnataka, compare healthcare
+                                services and prices, explore patient reviews,
+                                get AI-powered recommendations, and book
                                 appointments — all in one place.
 
                             </p>
@@ -155,11 +156,11 @@ function Home() {
 
                             {/* Hero buttons */}
 
-                            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+                            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
 
                                 <Link
                                     to="/hospitals"
-                                    className="inline-flex items-center justify-center rounded-xl bg-brand-500 px-7 py-4 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg"
+                                    className="inline-flex items-center justify-center rounded-xl bg-brand-500 px-6 py-3.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg"
                                 >
                                     Explore hospitals
                                     <span className="ml-2">
@@ -170,7 +171,7 @@ function Home() {
 
                                 <Link
                                     to="/register"
-                                    className="inline-flex items-center justify-center rounded-xl border border-ink-300 bg-white px-7 py-4 text-sm font-bold text-ink-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-ink-50"
+                                    className="inline-flex items-center justify-center rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-sm font-bold text-ink-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-ink-50"
                                 >
                                     Create free account
                                 </Link>
@@ -184,28 +185,28 @@ function Home() {
                             STATS
                         ================================================= */}
 
-                        <div className="mx-auto mt-16 max-w-4xl">
+                        <div className="mx-auto mt-10 max-w-4xl">
 
                             <div className="grid grid-cols-2 overflow-hidden rounded-3xl border border-ink-200 bg-white shadow-sm md:grid-cols-4">
 
                                 <Stat
-                                    value="51+"
+                                    value="130+"
                                     label="Hospitals"
                                 />
 
                                 <Stat
-                                    value="255+"
+                                    value="650+"
                                     label="Healthcare services"
                                 />
 
                                 <Stat
-                                    value="15+"
-                                    label="Cities"
+                                    value="40+"
+                                    label="Cities in AP, TG, TN & KA"
                                 />
 
                                 <Stat
-                                    value="AI"
-                                    label="Powered recommendations"
+                                    value="Nearby"
+                                    label="Location-based search"
                                 />
 
                             </div>
@@ -217,7 +218,7 @@ function Home() {
                             PRODUCT PREVIEW
                         ================================================= */}
 
-                        <div className="mx-auto mt-16 max-w-6xl">
+                        <div className="mx-auto mt-10 max-w-6xl">
 
                             <div className="relative overflow-hidden rounded-[2rem] border border-ink-200 bg-white p-3 shadow-[0_25px_80px_rgba(0,0,0,0.10)]">
 
@@ -362,7 +363,7 @@ function Home() {
                     className="border-t border-ink-100 bg-white"
                 >
 
-                    <div className="mx-auto max-w-7xl px-6 py-24 sm:py-28">
+                    <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
 
                         <div className="max-w-2xl">
 
@@ -370,7 +371,7 @@ function Home() {
                                 Everything in one place
                             </span>
 
-                            <h2 className="mt-3 text-4xl font-black tracking-tight text-ink-900 sm:text-5xl">
+                            <h2 className="mt-3 text-3xl font-black tracking-tight text-ink-900 sm:text-4xl">
                                 Make healthcare decisions with better information.
                             </h2>
 
@@ -384,12 +385,12 @@ function Home() {
                         </div>
 
 
-                        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
 
                             <FeatureCard
                                 icon="🔎"
                                 title="Find hospitals"
-                                description="Search hospitals by name, city, location, hospital type, rating and available services."
+                                description="Search 130+ hospitals across Andhra Pradesh, Telangana, Tamil Nadu & Karnataka by name, city, state, type and rating."
                             />
 
                             <FeatureCard
@@ -413,8 +414,8 @@ function Home() {
 
                             <FeatureCard
                                 icon="📍"
-                                title="Smart directions"
-                                description="Find the route to your selected hospital and calculate distance and estimated travel time."
+                                title="Nearby hospitals"
+                                description="Share your location to see hospitals near you first, with live distance badges and radius filters."
                             />
 
                             <FeatureCard
@@ -439,7 +440,7 @@ function Home() {
                     className="overflow-hidden bg-[#faf9f7]"
                 >
 
-                    <div className="mx-auto max-w-7xl px-6 py-24 sm:py-28">
+                    <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
 
                         <div className="grid items-center gap-16 lg:grid-cols-2">
 
@@ -631,7 +632,7 @@ function Home() {
                     className="border-t border-ink-100 bg-white"
                 >
 
-                    <div className="mx-auto max-w-7xl px-6 py-24 sm:py-28">
+                    <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
 
                         <div className="text-center">
 
@@ -694,7 +695,7 @@ function Home() {
 
                 <section className="bg-[#faf9f7]">
 
-                    <div className="mx-auto max-w-7xl px-6 py-24 sm:py-28">
+                    <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
 
                         <div className="grid items-center gap-12 lg:grid-cols-2">
 

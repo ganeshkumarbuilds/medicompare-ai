@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/+$/, "");
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL as API_URL } from "../config";
 
 function Register() {
     const navigate = useNavigate();
@@ -16,6 +15,19 @@ function Register() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+
+    /*
+     * Wake the backend the moment this page opens (cold free-tier
+     * servers need ~30-60s to boot). By the time the user has filled
+     * the form, the server is usually already awake.
+     */
+    useEffect(() => {
+        fetch(`${API_URL}/api/hello`, {
+            signal: AbortSignal.timeout(10000),
+        }).catch(() => {
+            // Silent: a sleeping backend wakes on this request anyway.
+        });
+    }, []);
 
     const clearAuthentication = () => {
         localStorage.removeItem("token");
@@ -115,6 +127,8 @@ function Register() {
                     headers: {
                         "Content-Type": "application/json"
                     },
+                    // Fail fast instead of hanging on a sleeping server.
+                    signal: AbortSignal.timeout(15000),
                     body: JSON.stringify({
                         name,
                         email,
@@ -135,54 +149,47 @@ function Register() {
             }
 
             /*
-             * IMPORTANT:
-             * Clear any previous admin/user session first, then
-             * store the new session from registration so the
-             * user is auto-logged in.
+             * Clear any previous session first, then store the new
+             * session from registration so the user is auto-logged in.
              */
             clearAuthentication();
 
             if (data.token) {
                 localStorage.setItem("token", data.token);
+                localStorage.setItem("userToken", data.token);
             }
 
             if (data.name) {
                 localStorage.setItem("name", data.name);
+                localStorage.setItem("userName", data.name);
             }
 
             if (data.email) {
                 localStorage.setItem("email", data.email);
+                localStorage.setItem("userEmail", data.email);
             }
 
             if (data.role) {
                 localStorage.setItem("role", data.role);
+                localStorage.setItem("userRole", data.role);
             }
 
-            setMessage(
-                "Account created successfully. Redirecting..."
-            );
-
-            setMessageType("success");
-
-            setForm({
-                name: "",
-                email: "",
-                password: "",
-                confirmPassword: ""
+            navigate("/hospitals", {
+                replace: true
             });
-
-            setTimeout(() => {
-                navigate("/hospitals", {
-                    replace: true
-                });
-            }, 1000);
 
         } catch (error) {
             console.error("Registration failed:", error);
 
+            const isTimeout =
+                error?.name === "TimeoutError" ||
+                error?.name === "AbortError";
+
             setMessage(
-                error.message ||
-                "Unable to create your account. Please try again."
+                isTimeout
+                    ? "The server is waking up (cold start). Please press Create account again in a few seconds."
+                    : error.message ||
+                        "Unable to create your account. Please try again."
             );
 
             setMessageType("error");
@@ -192,207 +199,146 @@ function Register() {
         }
     };
 
-    const inputStyle = {
-        width: "100%",
-        height: "58px",
-        boxSizing: "border-box",
-        border: "1px solid #d5dbe4",
-        borderRadius: "16px",
-        background: "#ffffff",
-        padding: "0 18px",
-        fontSize: "16px",
-        color: "#344054",
-        outline: "none"
-    };
+    const inputClassName =
+        "h-11 w-full rounded-xl border border-ink-200 bg-white px-3.5 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100";
+
+    const labelClassName =
+        "mb-1.5 block text-sm font-semibold text-ink-900";
 
     return (
-        <div
-            style={{
-                minHeight: "100vh",
-                width: "100%",
-                boxSizing: "border-box",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#f8fafc",
-                padding: "30px 20px",
-                fontFamily: "Arial, Helvetica, sans-serif"
-            }}
-        >
-            <div
-                style={{
-                    width: "500px",
-                    boxSizing: "border-box",
-                    background: "#ffffff",
-                    border: "1px solid #dfe3ea",
-                    borderRadius: "20px",
-                    padding: "42px 42px 38px"
-                }}
-            >
-                <h1
-                    style={{
-                        margin: 0,
-                        textAlign: "center",
-                        fontSize: "32px",
-                        lineHeight: "40px",
-                        fontWeight: 500,
-                        letterSpacing: "-0.5px",
-                        color: "#080808"
-                    }}
-                >
+        <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
+
+            <div className="w-full max-w-[420px] rounded-2xl border border-ink-200 bg-white p-7 shadow-sm sm:p-8">
+
+                <div className="flex items-center gap-3">
+
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-base font-bold text-white">
+                        M
+                    </div>
+
+                    <div>
+
+                        <div className="text-base font-bold tracking-tight text-ink-900">
+                            MediCompare
+                        </div>
+
+                        <div className="text-xs text-ink-400">
+                            Healthcare comparison
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink-900">
                     Create your account
                 </h1>
 
-                <p
-                    style={{
-                        margin: "10px 0 0",
-                        textAlign: "center",
-                        fontSize: "16px",
-                        lineHeight: "23px",
-                        color: "#61708a"
-                    }}
-                >
-                    Join MediCompare to compare hospitals, services and healthcare prices.
+                <p className="mt-1 text-sm text-ink-500">
+                    Compare hospitals, services and prices
                 </p>
 
-                <form
-                    onSubmit={handleSubmit}
-                    style={{
-                        marginTop: "32px"
-                    }}
-                >
+                <form onSubmit={handleSubmit} className="mt-6">
+
                     <div>
+
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom: "7px",
-                                fontSize: "15px",
-                                lineHeight: "20px",
-                                fontWeight: 600,
-                                color: "#111827"
-                            }}
+                            htmlFor="register-name"
+                            className={labelClassName}
                         >
                             Full name
                         </label>
 
                         <input
+                            id="register-name"
                             type="text"
                             name="name"
                             value={form.name}
                             onChange={handleChange}
                             placeholder="Enter your full name"
                             autoComplete="name"
-                            style={inputStyle}
+                            className={inputClassName}
                         />
+
                     </div>
 
-                    <div style={{ marginTop: "17px" }}>
+                    <div className="mt-4">
+
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom: "7px",
-                                fontSize: "15px",
-                                lineHeight: "20px",
-                                fontWeight: 600,
-                                color: "#111827"
-                            }}
+                            htmlFor="register-email"
+                            className={labelClassName}
                         >
                             Email address
                         </label>
 
                         <input
+                            id="register-email"
                             type="email"
                             name="email"
                             value={form.email}
                             onChange={handleChange}
                             placeholder="you@example.com"
                             autoComplete="email"
-                            style={inputStyle}
+                            className={inputClassName}
                         />
+
                     </div>
 
-                    <div style={{ marginTop: "17px" }}>
+                    <div className="mt-4">
+
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom: "7px",
-                                fontSize: "15px",
-                                lineHeight: "20px",
-                                fontWeight: 600,
-                                color: "#111827"
-                            }}
+                            htmlFor="register-password"
+                            className={labelClassName}
                         >
                             Password
                         </label>
 
                         <input
+                            id="register-password"
                             type="password"
                             name="password"
                             value={form.password}
                             onChange={handleChange}
                             placeholder="Create a strong password"
                             autoComplete="new-password"
-                            style={inputStyle}
+                            className={inputClassName}
                         />
 
-                        <p
-                            style={{
-                                margin: "6px 0 0",
-                                fontSize: "12px",
-                                lineHeight: "18px",
-                                color: "#8792a2"
-                            }}
-                        >
+                        <p className="mt-1.5 text-xs leading-5 text-ink-400">
                             8+ characters, including uppercase, lowercase and a number.
                         </p>
+
                     </div>
 
-                    <div style={{ marginTop: "17px" }}>
+                    <div className="mt-4">
+
                         <label
-                            style={{
-                                display: "block",
-                                marginBottom: "7px",
-                                fontSize: "15px",
-                                lineHeight: "20px",
-                                fontWeight: 600,
-                                color: "#111827"
-                            }}
+                            htmlFor="register-confirm"
+                            className={labelClassName}
                         >
                             Confirm password
                         </label>
 
                         <input
+                            id="register-confirm"
                             type="password"
                             name="confirmPassword"
                             value={form.confirmPassword}
                             onChange={handleChange}
                             placeholder="Enter your password again"
                             autoComplete="new-password"
-                            style={inputStyle}
+                            className={inputClassName}
                         />
+
                     </div>
 
                     {message && (
                         <div
-                            style={{
-                                marginTop: "14px",
-                                padding: "10px 14px",
-                                borderRadius: "10px",
-                                fontSize: "13px",
-                                lineHeight: "18px",
-                                background:
-                                    messageType === "success"
-                                        ? "#f0fdf4"
-                                        : "#fef2f2",
-                                border:
-                                    messageType === "success"
-                                        ? "1px solid #bbf7d0"
-                                        : "1px solid #fecaca",
-                                color:
-                                    messageType === "success"
-                                        ? "#15803d"
-                                        : "#dc2626"
-                            }}
+                            className={
+                                messageType === "success"
+                                    ? "mt-4 rounded-xl border border-green-200 bg-green-50 px-3.5 py-2.5 text-[13px] text-green-700"
+                                    : "mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700"
+                            }
                         >
                             {message}
                         </div>
@@ -401,55 +347,28 @@ function Register() {
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            width: "100%",
-                            height: "57px",
-                            marginTop: "20px",
-                            border: "none",
-                            borderRadius: "29px",
-                            background: "#5b5bf6",
-                            color: "#ffffff",
-                            fontSize: "19px",
-                            fontWeight: 400,
-                            cursor: loading
-                                ? "not-allowed"
-                                : "pointer",
-                            opacity: loading ? 0.65 : 1
-                        }}
+                        className="mt-5 h-11 w-full rounded-xl bg-brand-500 text-sm font-bold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {loading
                             ? "Creating account..."
-                            : "Create Account"}
+                            : "Create account"}
                     </button>
 
-                    <p
-                        style={{
-                            margin: "17px 0 0",
-                            textAlign: "center",
-                            fontSize: "16px",
-                            lineHeight: "23px",
-                            color: "#61708a"
-                        }}
-                    >
+                    <p className="mt-5 text-center text-sm text-ink-500">
                         Already have an account?{" "}
 
-                        <button
-                            type="button"
-                            onClick={() => navigate("/login")}
-                            style={{
-                                padding: 0,
-                                border: "none",
-                                background: "transparent",
-                                color: "#5151f5",
-                                fontSize: "16px",
-                                cursor: "pointer"
-                            }}
+                        <Link
+                            to="/login"
+                            className="font-semibold text-brand-600 transition hover:text-brand-700"
                         >
-                            Login
-                        </button>
+                            Sign in
+                        </Link>
                     </p>
+
                 </form>
+
             </div>
+
         </div>
     );
 }

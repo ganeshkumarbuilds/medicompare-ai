@@ -110,6 +110,18 @@ public class AdminHospitalController {
                             updatedHospital.getImageUrl()
                     );
 
+                    existingHospital.setState(
+                            updatedHospital.getState()
+                    );
+
+                    existingHospital.setLatitude(
+                            updatedHospital.getLatitude()
+                    );
+
+                    existingHospital.setLongitude(
+                            updatedHospital.getLongitude()
+                    );
+
                     Hospital savedHospital =
                             hospitalRepository.save(
                                     existingHospital

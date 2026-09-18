@@ -41,6 +41,9 @@ public class HospitalController {
             String city,
 
             @RequestParam(required = false)
+            String state,
+
+            @RequestParam(required = false)
             String hospitalType,
 
             @RequestParam(required = false)
@@ -82,6 +85,7 @@ public class HospitalController {
                         HospitalSpecification.filter(
                                 search,
                                 city,
+                                state,
                                 hospitalType,
                                 minRating,
                                 maxFee
@@ -90,6 +94,134 @@ public class HospitalController {
                 );
 
         return ResponseEntity.ok(hospitals);
+    }
+
+
+    // =========================================================
+    // NEARBY HOSPITALS (Haversine, km)
+    // GET /api/hospitals/nearby?lat=17.38&lng=78.48&radiusKm=25&state=Telangana&limit=50
+    // =========================================================
+
+    @GetMapping("/nearby")
+    public ResponseEntity<?> nearbyHospitals(
+            @RequestParam Double lat,
+            @RequestParam Double lng,
+            @RequestParam(defaultValue = "25") Double radiusKm,
+            @RequestParam(required = false) String state,
+            @RequestParam(defaultValue = "50") int limit
+    ) {
+
+        if (lat == null || lng == null) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of(
+                            "message", "lat and lng query params are required"
+                    ));
+        }
+
+        java.util.List<Hospital> all =
+                hospitalRepository.findAll();
+
+        java.util.List<java.util.Map<String, Object>> results =
+                new java.util.ArrayList<>();
+
+        for (Hospital hospital : all) {
+
+            if (hospital.getLatitude() == null
+                    || hospital.getLongitude() == null) {
+                continue;
+            }
+
+            if (state != null && !state.isBlank()
+                    && hospital.getState() != null
+                    && !hospital.getState().equalsIgnoreCase(state.trim())) {
+                continue;
+            }
+
+            double distanceKm = haversineKm(
+                    lat, lng,
+                    hospital.getLatitude(),
+                    hospital.getLongitude()
+            );
+
+            if (distanceKm <= radiusKm) {
+                java.util.Map<String, Object> entry =
+                        new java.util.LinkedHashMap<>();
+                entry.put("hospital", hospital);
+                entry.put("distanceKm",
+                        Math.round(distanceKm * 10.0) / 10.0);
+                results.add(entry);
+            }
+        }
+
+        results.sort(java.util.Comparator.comparingDouble(
+                entry -> ((Number) entry.get("distanceKm")).doubleValue()
+        ));
+
+        if (results.size() > limit) {
+            results = results.subList(0, limit);
+        }
+
+        return ResponseEntity.ok(results);
+    }
+
+
+    // =========================================================
+    // DISTINCT STATES + CITIES (for filters)
+    // =========================================================
+
+    @GetMapping("/meta/states")
+    public ResponseEntity<java.util.List<String>> distinctStates() {
+
+        java.util.List<String> states =
+                hospitalRepository.findAll().stream()
+                        .map(Hospital::getState)
+                        .filter(value -> value != null && !value.isBlank())
+                        .map(String::trim)
+                        .distinct()
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .toList();
+
+        return ResponseEntity.ok(states);
+    }
+
+    @GetMapping("/meta/cities")
+    public ResponseEntity<java.util.List<String>> distinctCities(
+            @RequestParam(required = false) String state
+    ) {
+
+        java.util.List<String> cities =
+                hospitalRepository.findAll().stream()
+                        .filter(hospital -> state == null
+                                || state.isBlank()
+                                || (hospital.getState() != null
+                                && hospital.getState().equalsIgnoreCase(state.trim())))
+                        .map(Hospital::getCity)
+                        .filter(value -> value != null && !value.isBlank())
+                        .map(String::trim)
+                        .distinct()
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .toList();
+
+        return ResponseEntity.ok(cities);
+    }
+
+    private double haversineKm(
+            double lat1, double lng1,
+            double lat2, double lng2
+    ) {
+        final double earthRadiusKm = 6371.0;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return earthRadiusKm * c;
     }
 
 
@@ -187,6 +319,18 @@ public class HospitalController {
                     hospital.setImageUrl(
                             hospitalDetails
                                     .getImageUrl()
+                    );
+
+                    hospital.setState(
+                            hospitalDetails.getState()
+                    );
+
+                    hospital.setLatitude(
+                            hospitalDetails.getLatitude()
+                    );
+
+                    hospital.setLongitude(
+                            hospitalDetails.getLongitude()
                     );
 
                     return ResponseEntity.ok(

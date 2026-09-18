@@ -1,18 +1,10 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL as API_URL } from "../config";
 
-const API_URL = import.meta.env.VITE_API_URL;
 function Login() {
 
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const initialMode =
-        location.pathname === "/admin/login"
-            ? "ADMIN"
-            : "USER";
-
-    const [loginType, setLoginType] = useState(initialMode);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -21,6 +13,20 @@ function Login() {
 
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+
+    /*
+     * Wake the backend the moment this page opens (cold free-tier
+     * servers need ~30-60s to boot). By the time the user has typed
+     * their credentials, the server is usually already awake, so the
+     * actual login request returns immediately.
+     */
+    useEffect(() => {
+        fetch(`${API_URL}/api/hello`, {
+            signal: AbortSignal.timeout(10000),
+        }).catch(() => {
+            // Silent: a sleeping backend wakes on this request anyway.
+        });
+    }, []);
 
     function clearOldSessions() {
 
@@ -44,23 +50,45 @@ function Login() {
         localStorage.removeItem("adminRefreshToken");
     }
 
-    function handleLoginTypeChange(type) {
+    function storeSession(data, role) {
 
-        setLoginType(type);
+        const token = data.token;
+        const name = data.name || "";
+        const accountEmail = data.email || email.trim();
 
-        setMessage("");
-        setMessageType("");
+        clearOldSessions();
 
-        setPassword("");
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", role);
+        localStorage.setItem("email", accountEmail);
 
-        /*
-         * Keep the URL consistent with the selected
-         * authentication type.
-         */
-        if (type === "ADMIN") {
-            navigate("/admin/login", { replace: true });
+        if (name) {
+            localStorage.setItem("name", name);
+        }
+
+        if (data.refreshToken || data.refresh_token) {
+            localStorage.setItem(
+                "refreshToken",
+                data.refreshToken || data.refresh_token
+            );
+        }
+
+        if (role === "ADMIN") {
+            localStorage.setItem("adminToken", token);
+            localStorage.setItem("adminRole", "ADMIN");
+            localStorage.setItem("adminEmail", accountEmail);
+
+            if (name) {
+                localStorage.setItem("adminName", name);
+            }
         } else {
-            navigate("/login", { replace: true });
+            localStorage.setItem("userToken", token);
+            localStorage.setItem("userRole", "USER");
+            localStorage.setItem("userEmail", accountEmail);
+
+            if (name) {
+                localStorage.setItem("userName", name);
+            }
         }
     }
 
@@ -72,7 +100,7 @@ function Login() {
         setMessageType("");
 
         if (!email.trim()) {
-            setMessage("Please enter your email id.");
+            setMessage("Please enter your email address.");
             setMessageType("error");
             return;
         }
@@ -88,22 +116,22 @@ function Login() {
             setLoading(true);
 
             /*
-             * USER and ADMIN use completely separate
-             * backend authentication endpoints.
+             * Single unified endpoint: the backend checks the
+             * existing admin accounts first, then the user
+             * accounts, and returns the role. Admins land on
+             * the admin panel, everyone else on the user app.
              */
-            const loginEndpoint =
-                loginType === "ADMIN"
-                    ? `${API_URL}/api/auth/login`
-                    : `${API_URL}/api/user/auth/login`;
-
             const response = await fetch(
-                loginEndpoint,
+                `${API_URL}/api/auth/login`,
                 {
                     method: "POST",
 
                     headers: {
                         "Content-Type": "application/json"
                     },
+
+                    // Fail fast instead of hanging on a sleeping server.
+                    signal: AbortSignal.timeout(15000),
 
                     body: JSON.stringify({
                         email: email.trim(),
@@ -135,170 +163,30 @@ function Login() {
                 );
             }
 
-            /*
-             * Always remove any previous session first.
-             *
-             * This prevents a USER from accidentally
-             * inheriting an ADMIN session and vice versa.
-             */
-            clearOldSessions();
+            const role =
+                (data.role || "USER").toUpperCase();
 
-            /*
-             * ==========================================
-             * ADMIN LOGIN
-             * ==========================================
-             */
-            if (loginType === "ADMIN") {
+            storeSession({ ...data, token }, role);
 
-                localStorage.setItem(
-                    "token",
-                    token
-                );
-
-                localStorage.setItem(
-                    "role",
-                    "ADMIN"
-                );
-
-                localStorage.setItem(
-                    "email",
-                    data.email || email.trim()
-                );
-
-                if (data.name) {
-                    localStorage.setItem(
-                        "name",
-                        data.name
-                    );
-                }
-
-                localStorage.setItem(
-                    "adminToken",
-                    token
-                );
-
-                localStorage.setItem(
-                    "adminRole",
-                    "ADMIN"
-                );
-
-                localStorage.setItem(
-                    "adminEmail",
-                    data.email || email.trim()
-                );
-
-                if (data.name) {
-                    localStorage.setItem(
-                        "adminName",
-                        data.name
-                    );
-                }
-
-                if (
-                    data.refreshToken ||
-                    data.refresh_token
-                ) {
-                    localStorage.setItem(
-                        "adminRefreshToken",
-                        data.refreshToken ||
-                        data.refresh_token
-                    );
-                }
-
-                /*
-                 * Admin goes to admin dashboard.
-                 */
-                navigate(
-                    "/admin",
-                    {
-                        replace: true
-                    }
-                );
-
-                return;
+            if (role === "ADMIN") {
+                navigate("/admin", { replace: true });
+            } else {
+                navigate("/hospitals", { replace: true });
             }
-
-            /*
-             * ==========================================
-             * USER LOGIN
-             * ==========================================
-             */
-
-            localStorage.setItem(
-                "token",
-                token
-            );
-
-            localStorage.setItem(
-                "role",
-                "USER"
-            );
-
-            localStorage.setItem(
-                "email",
-                data.email || email.trim()
-            );
-
-            if (data.name) {
-                localStorage.setItem(
-                    "name",
-                    data.name
-                );
-            }
-
-            localStorage.setItem(
-                "userToken",
-                token
-            );
-
-            localStorage.setItem(
-                "userRole",
-                "USER"
-            );
-
-            localStorage.setItem(
-                "userEmail",
-                data.email || email.trim()
-            );
-
-            if (data.name) {
-                localStorage.setItem(
-                    "userName",
-                    data.name
-                );
-            }
-
-            if (
-                data.refreshToken ||
-                data.refresh_token
-            ) {
-                localStorage.setItem(
-                    "userRefreshToken",
-                    data.refreshToken ||
-                    data.refresh_token
-                );
-            }
-
-            /*
-             * User goes to user application.
-             */
-            navigate(
-                "/hospitals",
-                {
-                    replace: true
-                }
-            );
 
         } catch (error) {
 
-            console.error(
-                `${loginType} login failed:`,
-                error
-            );
+            console.error("Login failed:", error);
+
+            const isTimeout =
+                error?.name === "TimeoutError" ||
+                error?.name === "AbortError";
 
             setMessage(
-                error.message ||
-                "Unable to login. Please try again."
+                isTimeout
+                    ? "The server is waking up (cold start). Please press Sign in again in a few seconds."
+                    : error.message ||
+                        "Unable to sign in. Please try again."
             );
 
             setMessageType("error");
@@ -310,362 +198,129 @@ function Login() {
     }
 
     return (
-        <div
-            style={{
-                minHeight: "100vh",
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#f8fafc",
-                padding: "30px 20px",
-                boxSizing: "border-box",
-                fontFamily: "Arial, Helvetica, sans-serif"
-            }}
-        >
+        <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
 
-            <div
-                style={{
-                    width: "500px",
-                    minHeight: "558px",
-                    boxSizing: "border-box",
-                    background: "#ffffff",
-                    border: "1px solid #dfe3ea",
-                    borderRadius: "20px",
-                    padding: "56px 42px 42px"
-                }}
-            >
+            <div className="w-full max-w-[400px] rounded-2xl border border-ink-200 bg-white p-7 shadow-sm sm:p-8">
 
-                <h1
-                    style={{
-                        margin: 0,
-                        textAlign: "center",
-                        fontSize: "38px",
-                        lineHeight: "1.2",
-                        fontWeight: 500,
-                        color: "#080808"
-                    }}
-                >
-                    Login
+                <div className="flex items-center gap-3">
+
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-base font-bold text-white">
+                        M
+                    </div>
+
+                    <div>
+
+                        <div className="text-base font-bold tracking-tight text-ink-900">
+                            MediCompare
+                        </div>
+
+                        <div className="text-xs text-ink-400">
+                            Healthcare comparison
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink-900">
+                    Welcome back
                 </h1>
 
-                <p
-                    style={{
-                        margin: "14px 0 0",
-                        textAlign: "center",
-                        fontSize: "17px",
-                        color: "#61708a"
-                    }}
-                >
-                    Please sign in to continue
+                <p className="mt-1 text-sm text-ink-500">
+                    Sign in to your account to continue
                 </p>
 
-                {/* ======================================
-                    USER / ADMIN SELECTOR
-                ======================================= */}
+                <form onSubmit={handleSubmit} className="mt-6">
 
-                <div
-                    style={{
-                        display: "flex",
-                        width: "100%",
-                        height: "50px",
-                        marginTop: "30px",
-                        padding: "4px",
-                        boxSizing: "border-box",
-                        borderRadius: "27px",
-                        background: "#f1f3f7"
-                    }}
-                >
+                    <div>
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            handleLoginTypeChange("USER")
-                        }
-                        style={{
-                            flex: 1,
-                            border: "none",
-                            borderRadius: "23px",
-                            background:
-                                loginType === "USER"
-                                    ? "#5b5bf6"
-                                    : "transparent",
-                            color:
-                                loginType === "USER"
-                                    ? "#ffffff"
-                                    : "#61708a",
-                            fontSize: "15px",
-                            fontWeight: 600,
-                            cursor: "pointer"
-                        }}
-                    >
-                        User
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            handleLoginTypeChange("ADMIN")
-                        }
-                        style={{
-                            flex: 1,
-                            border: "none",
-                            borderRadius: "23px",
-                            background:
-                                loginType === "ADMIN"
-                                    ? "#5b5bf6"
-                                    : "transparent",
-                            color:
-                                loginType === "ADMIN"
-                                    ? "#ffffff"
-                                    : "#61708a",
-                            fontSize: "15px",
-                            fontWeight: 600,
-                            cursor: "pointer"
-                        }}
-                    >
-                        Admin
-                    </button>
-
-                </div>
-
-                <div
-                    style={{
-                        marginTop: "12px",
-                        textAlign: "center",
-                        fontSize: "13px",
-                        color: "#7b8798"
-                    }}
-                >
-                    Signing in as{" "}
-                    <strong
-                        style={{
-                            color: "#5151f5"
-                        }}
-                    >
-                        {loginType === "ADMIN"
-                            ? "Administrator"
-                            : "User"}
-                    </strong>
-                </div>
-
-                <form
-                    onSubmit={handleSubmit}
-                    style={{
-                        marginTop: "30px"
-                    }}
-                >
-
-                    {/* ======================================
-                        EMAIL
-                    ======================================= */}
-
-                    <div
-                        style={{
-                            position: "relative"
-                        }}
-                    >
-
-                        <span
-                            style={{
-                                position: "absolute",
-                                left: "27px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                color: "#687387"
-                            }}
+                        <label
+                            htmlFor="login-email"
+                            className="mb-1.5 block text-sm font-semibold text-ink-900"
                         >
-                            ✉
-                        </span>
+                            Email address
+                        </label>
 
                         <input
+                            id="login-email"
                             type="email"
                             value={email}
                             onChange={(event) => {
                                 setEmail(event.target.value);
                                 setMessage("");
                             }}
-                            placeholder="Email id"
+                            placeholder="you@example.com"
                             autoComplete="email"
-                            style={{
-                                width: "100%",
-                                height: "62px",
-                                boxSizing: "border-box",
-                                border: "1px solid #d5dbe4",
-                                borderRadius: "31px",
-                                padding: "0 24px 0 60px",
-                                fontSize: "16px",
-                                color: "#344054",
-                                outline: "none"
-                            }}
+                            className="h-11 w-full rounded-xl border border-ink-200 bg-white px-3.5 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
                         />
 
                     </div>
 
-                    {/* ======================================
-                        PASSWORD
-                    ======================================= */}
+                    <div className="mt-4">
 
-                    <div
-                        style={{
-                            position: "relative",
-                            marginTop: "20px"
-                        }}
-                    >
+                        <div className="mb-1.5 flex items-center justify-between">
 
-                        <span
-                            style={{
-                                position: "absolute",
-                                left: "27px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                color: "#687387"
-                            }}
-                        >
-                            🔒
-                        </span>
+                            <label
+                                htmlFor="login-password"
+                                className="block text-sm font-semibold text-ink-900"
+                            >
+                                Password
+                            </label>
+
+                            <Link
+                                to="/forgot-password"
+                                className="text-xs font-semibold text-brand-600 transition hover:text-brand-700"
+                            >
+                                Forgot password?
+                            </Link>
+
+                        </div>
 
                         <input
+                            id="login-password"
                             type="password"
                             value={password}
                             onChange={(event) => {
                                 setPassword(event.target.value);
                                 setMessage("");
                             }}
-                            placeholder="Password"
+                            placeholder="Enter your password"
                             autoComplete="current-password"
-                            style={{
-                                width: "100%",
-                                height: "62px",
-                                boxSizing: "border-box",
-                                border: "1px solid #d5dbe4",
-                                borderRadius: "31px",
-                                padding: "0 24px 0 60px",
-                                fontSize: "16px",
-                                color: "#344054",
-                                outline: "none"
-                            }}
+                            className="h-11 w-full rounded-xl border border-ink-200 bg-white px-3.5 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
                         />
 
                     </div>
 
-                    {/* ======================================
-                        MESSAGE
-                    ======================================= */}
-
                     {message && (
                         <div
-                            style={{
-                                marginTop: "16px",
-                                padding: "10px 14px",
-                                borderRadius: "10px",
-                                fontSize: "13px",
-                                background:
-                                    messageType === "error"
-                                        ? "#fef2f2"
-                                        : "#eff6ff",
-                                border:
-                                    messageType === "error"
-                                        ? "1px solid #fecaca"
-                                        : "1px solid #bfdbfe",
-                                color:
-                                    messageType === "error"
-                                        ? "#dc2626"
-                                        : "#2563eb"
-                            }}
+                            className={
+                                messageType === "error"
+                                    ? "mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700"
+                                    : "mt-4 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-[13px] text-blue-700"
+                            }
                         >
                             {message}
                         </div>
                     )}
 
-                    {/* ======================================
-                        FORGOT PASSWORD
-                    ======================================= */}
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setMessage(
-                                "Password recovery is not available yet."
-                            );
-                            setMessageType("info");
-                        }}
-                        style={{
-                            display: "block",
-                            marginTop: "24px",
-                            padding: 0,
-                            border: "none",
-                            background: "transparent",
-                            color: "#5151f5",
-                            fontSize: "16px",
-                            cursor: "pointer"
-                        }}
-                    >
-                        Forgot password?
-                    </button>
-
-                    {/* ======================================
-                        LOGIN BUTTON
-                    ======================================= */}
-
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            width: "100%",
-                            height: "57px",
-                            marginTop: "12px",
-                            border: "none",
-                            borderRadius: "29px",
-                            background: "#5b5bf6",
-                            color: "#ffffff",
-                            fontSize: "20px",
-                            cursor: loading
-                                ? "not-allowed"
-                                : "pointer",
-                            opacity: loading ? 0.65 : 1
-                        }}
+                        className="mt-5 h-11 w-full rounded-xl bg-brand-500 text-sm font-bold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {loading
-                            ? "Logging in..."
-                            : loginType === "ADMIN"
-                                ? "Login as Admin"
-                                : "Login"}
+                        {loading ? "Signing in..." : "Sign in"}
                     </button>
 
-                    {/* ======================================
-                        REGISTER
-                    ======================================= */}
+                    <p className="mt-5 text-center text-sm text-ink-500">
+                        New to MediCompare?{" "}
 
-                    {loginType === "USER" && (
-                        <p
-                            style={{
-                                margin: "18px 0 0",
-                                textAlign: "center",
-                                fontSize: "17px",
-                                color: "#61708a"
-                            }}
+                        <Link
+                            to="/register"
+                            className="font-semibold text-brand-600 transition hover:text-brand-700"
                         >
-                            Don’t have an account?{" "}
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    navigate("/register")
-                                }
-                                style={{
-                                    padding: 0,
-                                    border: "none",
-                                    background: "transparent",
-                                    color: "#5151f5",
-                                    fontSize: "17px",
-                                    cursor: "pointer"
-                                }}
-                            >
-                                Sign up
-                            </button>
-                        </p>
-                    )}
+                            Create account
+                        </Link>
+                    </p>
 
                 </form>
 
