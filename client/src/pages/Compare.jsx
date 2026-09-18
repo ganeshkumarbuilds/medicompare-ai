@@ -369,6 +369,9 @@ function Compare() {
                     <div id="comparison-results">
                         <ComparisonTable
                             hospitals={comparison}
+                            verdict={verdict}
+                            loadingVerdict={loadingVerdict}
+                            verdictError={verdictError}
                         />
                     </div>
                 )}
@@ -470,7 +473,7 @@ function HospitalSelectionCard({
    COMPARISON TABLE
 ========================================================= */
 
-function ComparisonTable({ hospitals }) {
+function ComparisonTable({ hospitals, verdict, loadingVerdict, verdictError }) {
     const allServices = useMemo(() => {
         const map = new Map();
 
