@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL as API_URL } from "../config";
 import { fetchWithRetry, wakeBackend } from "../utils/fetchWithRetry";
@@ -17,9 +17,15 @@ function Register() {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
 
+    const mountedRef = useRef(true);
+
     // Warm up Render backend immediately so it's ready by the time the form is filled
     useEffect(() => {
         wakeBackend();
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
     }, []);
 
     const clearAuthentication = () => {
@@ -110,10 +116,31 @@ function Register() {
             return;
         }
 
+        // Single-flight guard: ignore double submits while a request is in flight.
+        if (loading) return;
+
+        const abortController = new AbortController();
+        let slowTimer = null;
+
         try {
             setLoading(true);
-            setMessage("");
-            setMessageType("");
+            setMessage(
+                "Contacting the server — this can take up to a minute if the server is waking up. Please wait..."
+            );
+            setMessageType("success");
+
+            // NOTE: retries: 0 on purpose. Re-POSTing register after the
+            // server already created the account (but the response was slow)
+            // returns a confusing 409 "already exists". One long 90s attempt
+            // covers even a full Render cold start without that hazard.
+            slowTimer = setTimeout(() => {
+                if (mountedRef.current) {
+                    setMessage(
+                        "Still working — the server is taking longer than usual (cold start). Please keep waiting, do not press Create again..."
+                    );
+                    setMessageType("success");
+                }
+            }, 15000);
 
             const response = await fetchWithRetry(
                 `${API_URL}/api/user/auth/register`,
@@ -122,13 +149,14 @@ function Register() {
                     headers: {
                         "Content-Type": "application/json"
                     },
+                    signal: abortController.signal,
                     body: JSON.stringify({
                         name,
                         email,
                         password: form.password
                     })
                 },
-                { retries: 2, timeout: 45000, retryDelay: 3000 }
+                { retries: 0, timeout: 90000 }
             );
 
             const data = await response.json().catch(() => ({}));
@@ -175,28 +203,42 @@ function Register() {
         } catch (error) {
             console.error("Registration failed:", error);
 
-            const isNetworkError =
-                error?.name === "TimeoutError" ||
-                error?.name === "AbortError" ||
-                error?.message?.includes("Failed to fetch") ||
-                error?.message?.includes("timed out");
+            if (!mountedRef.current) return;
 
-            // Only retryable/network errors get the cold-start message; real validation errors show exact message
-            if (isNetworkError) {
+            // If the account was actually created server-side but the
+            // response was lost (timeout), the next attempt returns 409.
+            // Detect that case and tell the user to sign in instead.
+            const messageText = error?.message || "";
+            if (
+                messageText.toLowerCase().includes("already exists")
+            ) {
                 setMessage(
-                    "Unable to reach the server. Please check your connection and try again."
+                    "An account with this email already exists. Please press Sign in instead — your account may have been created just now."
                 );
             } else {
-                setMessage(
-                    error.message ||
-                        "Unable to create your account. Please try again."
-                );
+                const isNetworkError =
+                    error?.name === "TimeoutError" ||
+                    error?.name === "AbortError" ||
+                    messageText.includes("Failed to fetch") ||
+                    messageText.includes("timed out");
+
+                if (isNetworkError) {
+                    setMessage(
+                        "The request timed out (the free-tier server can take ~60s to wake). Please wait a few seconds and press Create account once more — or try signing in, your account may already exist."
+                    );
+                } else {
+                    setMessage(
+                        messageText ||
+                            "Unable to create your account. Please try again."
+                    );
+                }
             }
 
             setMessageType("error");
 
         } finally {
-            setLoading(false);
+            if (slowTimer) clearTimeout(slowTimer);
+            if (mountedRef.current) setLoading(false);
         }
     };
 

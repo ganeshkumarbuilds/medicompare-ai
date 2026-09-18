@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL as API_URL } from "../config";
 import { fetchWithRetry, wakeBackend } from "../utils/fetchWithRetry";
@@ -15,8 +15,14 @@ function Login() {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
 
+    const mountedRef = useRef(true);
+
     useEffect(() => {
         wakeBackend();
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
     }, []);
 
     function clearOldSessions() {
@@ -102,10 +108,30 @@ function Login() {
             return;
         }
 
+        // Single-flight guard: ignore double submits while a request is in flight.
+        if (loading) return;
+
+        let slowTimer = null;
+
         try {
 
             setLoading(true);
+            setMessage(
+                "Signing you in — this can take up to a minute if the server is waking up. Please wait..."
+            );
+            setMessageType("success");
 
+            slowTimer = setTimeout(() => {
+                if (mountedRef.current) {
+                    setMessage(
+                        "Still working — the server is taking longer than usual. Please keep waiting, do not press Sign in again..."
+                    );
+                    setMessageType("success");
+                }
+            }, 15000);
+
+            // NOTE: retries: 0 on purpose (login is non-idempotent for UX:
+            // a slow first attempt must not fire a confusing duplicate).
             const response = await fetchWithRetry(
                 `${API_URL}/api/auth/login`,
                 {
@@ -118,7 +144,7 @@ function Login() {
                         password
                     })
                 },
-                { retries: 2, timeout: 45000, retryDelay: 3000 }
+                { retries: 0, timeout: 90000 }
             );
 
             const data =
@@ -159,19 +185,22 @@ function Login() {
 
             console.error("Login failed:", error);
 
+            if (!mountedRef.current) return;
+
+            const messageText = error?.message || "";
             const isNetworkError =
                 error?.name === "TimeoutError" ||
                 error?.name === "AbortError" ||
-                error?.message?.includes("Failed to fetch") ||
-                error?.message?.includes("timed out");
+                messageText.includes("Failed to fetch") ||
+                messageText.includes("timed out");
 
             if (isNetworkError) {
                 setMessage(
-                    "Unable to reach the server. Please check your connection and try again."
+                    "The request timed out (the free-tier server can take ~60s to wake). Please wait a few seconds and press Sign in once more."
                 );
             } else {
                 setMessage(
-                    error.message ||
+                    messageText ||
                         "Unable to sign in. Please try again."
                 );
             }
@@ -180,7 +209,8 @@ function Login() {
 
         } finally {
 
-            setLoading(false);
+            if (slowTimer) clearTimeout(slowTimer);
+            if (mountedRef.current) setLoading(false);
         }
     }
 

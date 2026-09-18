@@ -37,6 +37,12 @@ function sleep(ms) {
 
 /**
  * Fetch with automatic retry and proper timeout handling.
+ *
+ * WARNING: never auto-retry non-idempotent POSTs (register/login/booking).
+ * The server may have committed while the client timed out waiting, so a
+ * retry surfaces a confusing "already exists" error. Call those with
+ * `{ retries: 0 }` and one long timeout instead.
+ *
  * @param {string} url
  * @param {RequestInit} options
  * @param {{ retries?: number, timeout?: number, retryDelay?: number }} config
@@ -55,10 +61,25 @@ export async function fetchWithRetry(url, options = {}, config = {}) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+        // Honor a caller-supplied abort signal (e.g. unmount) as well.
+        const callerSignal = options.signal;
+        let signal = controller.signal;
+        if (callerSignal) {
+            if (typeof AbortSignal.any === "function") {
+                signal = AbortSignal.any([callerSignal, controller.signal]);
+            } else if (callerSignal.aborted) {
+                controller.abort();
+            } else {
+                callerSignal.addEventListener("abort", () => controller.abort(), {
+                    once: true,
+                });
+            }
+        }
+
         try {
             const response = await fetch(url, {
                 ...options,
-                signal: controller.signal,
+                signal,
             });
             clearTimeout(timeoutId);
 
