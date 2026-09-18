@@ -214,6 +214,20 @@ function App() {
                     }
                 />
 
+                {/*
+                    "+ Add Hospital" buttons navigate here. Static
+                    segment outranks :hospitalId, so "add" never
+                    resolves as a hospital id.
+                */}
+                <Route
+                    path="/admin/hospitals/add"
+                    element={
+                        <AdminProtectedRoute>
+                            <HospitalForm />
+                        </AdminProtectedRoute>
+                    }
+                />
+
                 <Route
                     path="/admin/hospitals/:id/edit"
                     element={

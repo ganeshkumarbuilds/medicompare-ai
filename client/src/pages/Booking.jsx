@@ -89,7 +89,7 @@ function Booking() {
             setError("");
 
             const response =
-                await api.get("/hospitals");
+                await api.get("/hospitals?size=300");
 
             const data =
                 Array.isArray(response.data)

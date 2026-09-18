@@ -25,7 +25,7 @@ function Compare() {
 
             const response = await api.get("/hospitals", {
                 params: {
-                    size: 100,
+                    size: 300,
                 },
             });
 
