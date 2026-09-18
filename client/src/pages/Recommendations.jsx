@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { API_BASE_URL as API_URL } from "../config";
+import { fetchWithRetry } from "../utils/fetchWithRetry";
 
 const SERVICES = [
     "General Consultation",
@@ -159,7 +160,7 @@ function Recommendations() {
         try {
             setLoading(true);
 
-            const response = await fetch(
+            const response = await fetchWithRetry(
                 `${API_URL}/api/recommendations/ai`,
                 {
                     method: "POST",
@@ -167,7 +168,8 @@ function Recommendations() {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(requestBody),
-                }
+                },
+                { retries: 2, timeout: 60000, retryDelay: 3000 }
             );
 
             const data = await response.json();

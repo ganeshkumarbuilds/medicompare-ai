@@ -32,6 +32,8 @@ import Booking from "./pages/Booking";
 import BookingStatus from "./pages/BookingStatus";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import { useEffect } from "react";
+import { startKeepAlive } from "./utils/keepAlive";
 
 
 const AdminProtectedRoute = ({ children }) => {
@@ -64,6 +66,10 @@ const UserProtectedRoute = ({ children }) => {
 
 
 function App() {
+    useEffect(() => {
+        startKeepAlive();
+    }, []);
+
     return (
         <BrowserRouter>
             <Routes>

@@ -7,6 +7,7 @@ import {
     handleHospitalImageError,
     resolveHospitalImageUrl,
 } from "../utils/hospitalImage";
+import { fetchWithRetry } from "../utils/fetchWithRetry";
 
 function Hospitals() {
 
@@ -132,9 +133,10 @@ function Hospitals() {
             setLoading(true);
             setError("");
 
-            const response = await fetch(
+            const response = await fetchWithRetry(
                 `${API_URL}/api/hospitals?size=200`,
-                { signal: AbortSignal.timeout(30000) }
+                {},
+                { retries: 2, timeout: 45000, retryDelay: 4000 }
             );
 
             if (!response.ok) {
@@ -234,8 +236,7 @@ function Hospitals() {
                 err
             );
 
-            // Render free tier sleeps: retry once after a short wait
-            // so a cold backend still loads instead of showing an error.
+            // fetchWithRetry already retried 2 times internally; this outer retry handles the final fallback
             if (retryCount < 1) {
                 await new Promise((resolve) =>
                     setTimeout(resolve, 4000)
@@ -245,7 +246,7 @@ function Hospitals() {
             }
 
             setError(
-                "Unable to reach the server. The backend may be waking up — please press Retry in a few seconds."
+                "Unable to reach the server. Please check your connection and press Retry."
             );
 
         } finally {

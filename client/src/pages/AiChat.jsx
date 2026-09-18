@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 import { API_BASE_URL as API_URL } from "../config";
+import { fetchWithRetry } from "../utils/fetchWithRetry";
 function AiChat() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -29,7 +30,7 @@ function AiChat() {
         setLoading(true);
 
         try {
-            const response = await fetch(
+            const response = await fetchWithRetry(
                 `${API_URL}/api/ai/chat`,
                 {
                     method: "POST",
@@ -39,7 +40,8 @@ function AiChat() {
                     body: JSON.stringify({
                         message: message,
                     }),
-                }
+                },
+                { retries: 2, timeout: 60000, retryDelay: 3000 }
             );
 
             const data = await response.json();

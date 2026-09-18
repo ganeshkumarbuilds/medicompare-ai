@@ -47,7 +47,7 @@ function AdminDashboard() {
             }
 
             const response = await fetch(
-                `${API_URL}/api/admin/dashboard/stats`,
+                `${API_URL}/admin/dashboard/stats`,
                 {
                     method: "GET",
                     headers: {

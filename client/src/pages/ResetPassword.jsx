@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL as API_URL } from "../config";
+import { fetchWithRetry } from "../utils/fetchWithRetry";
 
 function ResetPassword() {
     const navigate = useNavigate();
@@ -50,7 +51,7 @@ function ResetPassword() {
         try {
             setLoading(true);
 
-            const response = await fetch(
+            const response = await fetchWithRetry(
                 `${API_URL}/api/user/auth/reset-password`,
                 {
                     method: "POST",
@@ -61,7 +62,8 @@ function ResetPassword() {
                         token,
                         newPassword: form.newPassword
                     })
-                }
+                },
+                { retries: 2, timeout: 45000, retryDelay: 3000 }
             );
 
             const data = await response.json().catch(() => ({}));

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL as API_URL } from "../config";
+import { fetchWithRetry, wakeBackend } from "../utils/fetchWithRetry";
 
 function Register() {
     const navigate = useNavigate();
@@ -16,17 +17,9 @@ function Register() {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
 
-    /*
-     * Wake the backend the moment this page opens (cold free-tier
-     * servers need ~30-60s to boot). By the time the user has filled
-     * the form, the server is usually already awake.
-     */
+    // Warm up Render backend immediately so it's ready by the time the form is filled
     useEffect(() => {
-        fetch(`${API_URL}/api/hello`, {
-            signal: AbortSignal.timeout(10000),
-        }).catch(() => {
-            // Silent: a sleeping backend wakes on this request anyway.
-        });
+        wakeBackend();
     }, []);
 
     const clearAuthentication = () => {
@@ -119,22 +112,23 @@ function Register() {
 
         try {
             setLoading(true);
+            setMessage("");
+            setMessageType("");
 
-            const response = await fetch(
+            const response = await fetchWithRetry(
                 `${API_URL}/api/user/auth/register`,
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    // Fail fast instead of hanging on a sleeping server.
-                    signal: AbortSignal.timeout(15000),
                     body: JSON.stringify({
                         name,
                         email,
                         password: form.password
                     })
-                }
+                },
+                { retries: 2, timeout: 45000, retryDelay: 3000 }
             );
 
             const data = await response.json().catch(() => ({}));
@@ -181,16 +175,23 @@ function Register() {
         } catch (error) {
             console.error("Registration failed:", error);
 
-            const isTimeout =
+            const isNetworkError =
                 error?.name === "TimeoutError" ||
-                error?.name === "AbortError";
+                error?.name === "AbortError" ||
+                error?.message?.includes("Failed to fetch") ||
+                error?.message?.includes("timed out");
 
-            setMessage(
-                isTimeout
-                    ? "The server is waking up (cold start). Please press Create account again in a few seconds."
-                    : error.message ||
+            // Only retryable/network errors get the cold-start message; real validation errors show exact message
+            if (isNetworkError) {
+                setMessage(
+                    "Unable to reach the server. Please check your connection and try again."
+                );
+            } else {
+                setMessage(
+                    error.message ||
                         "Unable to create your account. Please try again."
-            );
+                );
+            }
 
             setMessageType("error");
 

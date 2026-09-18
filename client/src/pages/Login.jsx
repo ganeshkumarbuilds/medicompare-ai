@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL as API_URL } from "../config";
+import { fetchWithRetry, wakeBackend } from "../utils/fetchWithRetry";
 
 function Login() {
 
@@ -14,18 +15,8 @@ function Login() {
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState("");
 
-    /*
-     * Wake the backend the moment this page opens (cold free-tier
-     * servers need ~30-60s to boot). By the time the user has typed
-     * their credentials, the server is usually already awake, so the
-     * actual login request returns immediately.
-     */
     useEffect(() => {
-        fetch(`${API_URL}/api/hello`, {
-            signal: AbortSignal.timeout(10000),
-        }).catch(() => {
-            // Silent: a sleeping backend wakes on this request anyway.
-        });
+        wakeBackend();
     }, []);
 
     function clearOldSessions() {
@@ -115,29 +106,19 @@ function Login() {
 
             setLoading(true);
 
-            /*
-             * Single unified endpoint: the backend checks the
-             * existing admin accounts first, then the user
-             * accounts, and returns the role. Admins land on
-             * the admin panel, everyone else on the user app.
-             */
-            const response = await fetch(
+            const response = await fetchWithRetry(
                 `${API_URL}/api/auth/login`,
                 {
                     method: "POST",
-
                     headers: {
                         "Content-Type": "application/json"
                     },
-
-                    // Fail fast instead of hanging on a sleeping server.
-                    signal: AbortSignal.timeout(15000),
-
                     body: JSON.stringify({
                         email: email.trim(),
                         password
                     })
-                }
+                },
+                { retries: 2, timeout: 45000, retryDelay: 3000 }
             );
 
             const data =
@@ -178,16 +159,22 @@ function Login() {
 
             console.error("Login failed:", error);
 
-            const isTimeout =
+            const isNetworkError =
                 error?.name === "TimeoutError" ||
-                error?.name === "AbortError";
+                error?.name === "AbortError" ||
+                error?.message?.includes("Failed to fetch") ||
+                error?.message?.includes("timed out");
 
-            setMessage(
-                isTimeout
-                    ? "The server is waking up (cold start). Please press Sign in again in a few seconds."
-                    : error.message ||
+            if (isNetworkError) {
+                setMessage(
+                    "Unable to reach the server. Please check your connection and try again."
+                );
+            } else {
+                setMessage(
+                    error.message ||
                         "Unable to sign in. Please try again."
-            );
+                );
+            }
 
             setMessageType("error");
 

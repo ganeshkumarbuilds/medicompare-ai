@@ -87,9 +87,12 @@ public class HospitalReview {
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-
-        createdAt = now;
-        updatedAt = now;
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
     }
 
     @PreUpdate

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL as API_URL } from "../config";
+import { fetchWithRetry } from "../utils/fetchWithRetry";
 
 function ForgotPassword() {
     const navigate = useNavigate();
@@ -23,7 +24,7 @@ function ForgotPassword() {
         try {
             setLoading(true);
 
-            await fetch(
+            await fetchWithRetry(
                 `${API_URL}/api/user/auth/forgot-password`,
                 {
                     method: "POST",
@@ -33,7 +34,8 @@ function ForgotPassword() {
                     body: JSON.stringify({
                         email: email.trim()
                     })
-                }
+                },
+                { retries: 2, timeout: 45000, retryDelay: 3000 }
             );
 
             /*
