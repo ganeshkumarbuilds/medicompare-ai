@@ -48,7 +48,7 @@ function EditHospital() {
             setError("");
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
 
             const response = await axios.get(
@@ -217,7 +217,7 @@ function EditHospital() {
 
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
 
             const payload = {

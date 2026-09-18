@@ -14,7 +14,9 @@ const AdminBookings = () => {
     const [error, setError] = useState("");
     const [filter, setFilter] = useState("ALL");
 
-    const adminToken = localStorage.getItem("adminToken");
+    const adminToken =
+        localStorage.getItem("adminToken") ||
+        localStorage.getItem("token");
 
     const getBookings = async () => {
         try {

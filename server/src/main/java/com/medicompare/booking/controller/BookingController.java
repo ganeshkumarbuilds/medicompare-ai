@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -120,8 +121,9 @@ public class BookingController {
                 authentication.getName() == null ||
                 authentication.getName().isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "Authenticated user could not be determined"
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Please log in to continue."
             );
         }
 
@@ -130,8 +132,9 @@ public class BookingController {
         return userRepository
                 .findByEmailIgnoreCase(email)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Authenticated user not found"
+                        new ResponseStatusException(
+                                HttpStatus.UNAUTHORIZED,
+                                "Please log in with a user account."
                         )
                 );
     }

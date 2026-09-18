@@ -52,7 +52,7 @@ function AdminHospitalDetails() {
             setError("");
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
             const response = await fetch(
                 `${API_URL}/api/admin/hospitals/${id}`,
@@ -117,7 +117,7 @@ function AdminHospitalDetails() {
             setServiceError("");
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
             const response = await fetch(
                 `${API_URL}/api/admin/hospitals/${id}/services`,
@@ -306,7 +306,7 @@ function AdminHospitalDetails() {
             setSavingService(true);
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
             const payload = {
 
@@ -447,7 +447,7 @@ function AdminHospitalDetails() {
             setServiceError("");
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
             const response =
                 await fetch(
@@ -508,7 +508,7 @@ function AdminHospitalDetails() {
             setError("");
 
             const token =
-                localStorage.getItem("token");
+                localStorage.getItem("token") || localStorage.getItem("adminToken");
 
             const response =
                 await fetch(

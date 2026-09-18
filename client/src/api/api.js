@@ -66,8 +66,8 @@ api.interceptors.response.use(
         const delay = RETRY_DELAY_MS * Math.pow(1.8, config.__retryCount - 1);
         await sleep(delay);
 
-        // Increase timeout for retry (cold start needs longer)
-        config.timeout = 60000;
+        // Never shorten a caller-supplied timeout (e.g. 90s AI verdict)
+        config.timeout = Math.max(config.timeout || 0, 60000);
 
         return api(config);
     }
