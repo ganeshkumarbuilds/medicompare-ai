@@ -13,6 +13,11 @@ import "leaflet/dist/leaflet.css";
 
 import Navbar from "../components/Navbar";
 import api from "../api/api";
+import {
+    distanceForHospital as sharedDistance,
+    filterAndSortHospitals,
+    getHospitalCoords,
+} from "../utils/hospitalFilters";
 
 
 // Fix Leaflet marker icons when using Vite.
@@ -91,36 +96,7 @@ function RouteBounds({ routeCoordinates }) {
 // ============================================================
 
 function getCoordinates(hospital) {
-
-    if (!hospital) {
-        return null;
-    }
-
-    const latitude =
-        hospital.latitude ??
-        hospital.lat ??
-        hospital.location?.latitude ??
-        hospital.location?.lat;
-
-    const longitude =
-        hospital.longitude ??
-        hospital.lng ??
-        hospital.location?.longitude ??
-        hospital.location?.lng;
-
-    if (
-        latitude !== undefined &&
-        longitude !== undefined &&
-        !Number.isNaN(Number(latitude)) &&
-        !Number.isNaN(Number(longitude))
-    ) {
-        return [
-            Number(latitude),
-            Number(longitude),
-        ];
-    }
-
-    return null;
+    return getHospitalCoords(hospital);
 }
 
 
@@ -566,145 +542,43 @@ function Map() {
     }, [passedHospital]);
 
 
-    // ========================================================
-    // HOSPITALS WITH COORDINATES
-    // ========================================================
-
-    const hospitalsWithCoordinates =
-        useMemo(() => {
-
-            return hospitals
-                .map((hospital) => ({
-                    ...hospital,
-                    coordinates:
-                        getCoordinates(
-                            hospital
-                        ),
-                }))
-                .filter(
-                    (hospital) =>
-                        hospital.coordinates !== null
-                );
-
-        }, [hospitals]);
-
-
     const [nearbyOnly, setNearbyOnly] = useState(false);
-    const [radiusKm, setRadiusKm] = useState(50);
-
-    function haversineKm(lat1, lon1, lat2, lon2) {
-        if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
-            return null;
-        }
-        const toRad = (value) => (value * Math.PI) / 180;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(lat1)) *
-                Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) *
-                Math.sin(dLon / 2);
-        return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
+    const [radiusKm, setRadiusKm] = useState(25);
 
     function distanceForHospital(hospital) {
-        if (!userLocation) {
-            return null;
-        }
-        const lat = hospital.latitude ?? hospital.lat ?? null;
-        const lng = hospital.longitude ?? hospital.lng ?? null;
-        if (lat == null || lng == null) {
-            return null;
-        }
-        return haversineKm(
-            userLocation[0],
-            userLocation[1],
-            Number(lat),
-            Number(lng)
-        );
+        return sharedDistance(hospital, userLocation);
     }
 
     // ========================================================
     // FILTER (search + nearby, nearest first when located)
+    // Shared with Hospitals.jsx so behaviour is identical.
     // ========================================================
 
-    const filteredHospitals =
-        useMemo(() => {
+    const filteredHospitals = useMemo(() => {
+        return filterAndSortHospitals(hospitals, {
+            search,
+            nearbyOnly,
+            radiusKm,
+            userLocation,
+        });
+    }, [hospitals, search, nearbyOnly, radiusKm, userLocation]);
 
-            const query =
-                search.trim().toLowerCase();
+    // ========================================================
+    // HOSPITALS WITH COORDINATES (markers follow list filters)
+    // ========================================================
 
-            let list = hospitals;
-
-            if (query) {
-                list = list.filter(
-                    (hospital) => {
-
-                        const haystack = [
-                            hospital.name,
-                            hospital.city,
-                            hospital.state,
-                            hospital.address,
-                            hospital.hospitalType,
-                        ]
-                            .filter(Boolean)
-                            .join(" ")
-                            .toLowerCase();
-
-                        return haystack.includes(query);
-
-                    }
-                );
-            }
-
-            if (nearbyOnly && userLocation) {
-                list = list.filter((hospital) => {
-                    const distance = haversineKm(
-                        userLocation[0],
-                        userLocation[1],
-                        Number(
-                            hospital.latitude ??
-                                hospital.lat ??
-                                NaN
-                        ),
-                        Number(
-                            hospital.longitude ??
-                                hospital.lng ??
-                                NaN
-                        )
-                    );
-                    return (
-                        distance != null &&
-                        !Number.isNaN(distance) &&
-                        distance <= radiusKm
-                    );
-                });
-            }
-
-            if (userLocation) {
-                list = [...list].sort((a, b) => {
-                    const da = haversineKm(
-                        userLocation[0],
-                        userLocation[1],
-                        Number(a.latitude ?? a.lat ?? NaN),
-                        Number(a.longitude ?? a.lng ?? NaN)
-                    );
-                    const db = haversineKm(
-                        userLocation[0],
-                        userLocation[1],
-                        Number(b.latitude ?? b.lat ?? NaN),
-                        Number(b.longitude ?? b.lng ?? NaN)
-                    );
-                    if (da == null || Number.isNaN(da)) return 1;
-                    if (db == null || Number.isNaN(db)) return -1;
-                    return da - db;
-                });
-            }
-
-            return list;
-
-        }, [hospitals, search, nearbyOnly, radiusKm, userLocation]);
+    /*
+     * Markers follow the SAME filters as the list (search + nearby),
+     * so the map and the list can never disagree again.
+     */
+    const hospitalsWithCoordinates = useMemo(() => {
+        return filteredHospitals
+            .map((hospital) => ({
+                ...hospital,
+                coordinates: getCoordinates(hospital),
+            }))
+            .filter((hospital) => hospital.coordinates !== null);
+    }, [filteredHospitals]);
 
 
     // ========================================================
@@ -749,6 +623,9 @@ function Map() {
                 setUserLocation(
                     currentLocation
                 );
+
+                // Same as Hospitals page: enabling location turns on nearby filtering
+                setNearbyOnly(true);
 
                 setLocationLoading(false);
 

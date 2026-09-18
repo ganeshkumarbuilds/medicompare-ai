@@ -8,6 +8,10 @@ import {
     resolveHospitalImageUrl,
 } from "../utils/hospitalImage";
 import { fetchWithRetry } from "../utils/fetchWithRetry";
+import {
+    distanceForHospital as sharedDistance,
+    filterAndSortHospitals,
+} from "../utils/hospitalFilters";
 
 function Hospitals() {
 
@@ -32,35 +36,6 @@ function Hospitals() {
     const [locationError, setLocationError] = useState("");
     const [nearbyOnly, setNearbyOnly] = useState(false);
     const [radiusKm, setRadiusKm] = useState(25);
-
-
-    function haversineKm(lat1, lon1, lat2, lon2) {
-        if (
-            lat1 == null || lon1 == null ||
-            lat2 == null || lon2 == null
-        ) {
-            return null;
-        }
-
-        const toRad = (value) => (value * Math.PI) / 180;
-        const earthRadiusKm = 6371;
-
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(lat1)) *
-                Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) *
-                Math.sin(dLon / 2);
-
-        return (
-            earthRadiusKm *
-            2 *
-            Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        );
-    }
 
 
     function requestUserLocation() {
@@ -99,25 +74,7 @@ function Hospitals() {
 
 
     function distanceForHospital(hospital) {
-        if (!userLocation) {
-            return null;
-        }
-
-        const lat =
-            hospital.latitude ?? hospital.lat ?? null;
-        const lng =
-            hospital.longitude ?? hospital.lng ?? null;
-
-        if (lat == null || lng == null) {
-            return null;
-        }
-
-        return haversineKm(
-            userLocation[0],
-            userLocation[1],
-            Number(lat),
-            Number(lng)
-        );
+        return sharedDistance(hospital, userLocation);
     }
 
 
@@ -311,85 +268,15 @@ function Hospitals() {
 
 
     const filteredHospitals = useMemo(() => {
-
-        const normalizedSearch =
-            search.trim().toLowerCase();
-
-        const withDistance = hospitals.map(hospital => ({
-            hospital,
-            distanceKm: distanceForHospital(hospital),
-        }));
-
-        const filtered = withDistance.filter(({ hospital, distanceKm }) => {
-
-            const searchableText = [
-                hospital.name,
-                hospital.city,
-                hospital.state,
-                hospital.address,
-                hospital.location,
-                hospital.hospitalType
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-
-            const matchesSearch =
-                !normalizedSearch ||
-                searchableText.includes(
-                    normalizedSearch
-                );
-
-
-            const matchesCity =
-                !city ||
-                hospital.city?.toLowerCase() ===
-                    city.toLowerCase();
-
-
-            const matchesState =
-                !stateFilter ||
-                hospital.state?.toLowerCase() ===
-                    stateFilter.toLowerCase();
-
-
-            const matchesType =
-                !hospitalType ||
-                hospital.hospitalType?.toLowerCase() ===
-                    hospitalType.toLowerCase();
-
-
-            const matchesNearby =
-                !nearbyOnly ||
-                !userLocation ||
-                (distanceKm != null &&
-                    distanceKm <= radiusKm);
-
-            return (
-                matchesSearch &&
-                matchesCity &&
-                matchesState &&
-                matchesType &&
-                matchesNearby
-            );
-
+        return filterAndSortHospitals(hospitals, {
+            search,
+            city,
+            stateFilter,
+            hospitalType,
+            nearbyOnly,
+            radiusKm,
+            userLocation,
         });
-
-        // Nearest first when location is known
-        if (userLocation) {
-            filtered.sort((a, b) => {
-                if (a.distanceKm == null) return 1;
-                if (b.distanceKm == null) return -1;
-                return a.distanceKm - b.distanceKm;
-            });
-        }
-
-        return filtered.map(entry => ({
-            ...entry.hospital,
-            _distanceKm: entry.distanceKm,
-        }));
-
     }, [
         hospitals,
         search,
