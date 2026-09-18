@@ -1,6 +1,9 @@
 package com.medicompare.compare.controller;
 
+import com.medicompare.compare.dto.CompareVerdictRequest;
+import com.medicompare.compare.dto.CompareVerdictResponse;
 import com.medicompare.compare.dto.HospitalComparisonResponse;
+import com.medicompare.compare.service.CompareVerdictService;
 import com.medicompare.compare.service.HospitalComparisonService;
 
 import org.springframework.http.ResponseEntity;
@@ -15,12 +18,16 @@ import java.util.Map;
 public class HospitalComparisonController {
 
     private final HospitalComparisonService comparisonService;
+    private final CompareVerdictService verdictService;
 
     public HospitalComparisonController(
-            HospitalComparisonService comparisonService
+            HospitalComparisonService comparisonService,
+            CompareVerdictService verdictService
     ) {
         this.comparisonService =
                 comparisonService;
+        this.verdictService =
+                verdictService;
     }
 
     // =========================
@@ -53,6 +60,52 @@ public class HospitalComparisonController {
                     );
 
             return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException exception) {
+
+            return ResponseEntity.badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    exception.getMessage()
+                            )
+                    );
+        }
+    }
+
+    // =========================
+    // AI VERDICT
+    // =========================
+
+    @PostMapping("/ai-verdict")
+    public ResponseEntity<?> aiVerdict(
+            @RequestBody CompareVerdictRequest request
+    ) {
+
+        try {
+
+            List<Long> hospitalIds =
+                    request == null
+                            ? null
+                            : request.getHospitalIds();
+
+            if (hospitalIds == null ||
+                    hospitalIds.size() < 2 ||
+                    hospitalIds.size() > 4) {
+
+                return ResponseEntity.badRequest()
+                        .body(
+                                Map.of(
+                                        "message",
+                                        "Select between 2 and 4 hospitals to compare."
+                                )
+                        );
+            }
+
+            CompareVerdictResponse verdict =
+                    verdictService.verdict(hospitalIds);
+
+            return ResponseEntity.ok(verdict);
 
         } catch (IllegalArgumentException exception) {
 

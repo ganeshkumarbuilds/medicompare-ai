@@ -14,6 +14,10 @@ function Compare() {
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
 
+    const [verdict, setVerdict] = useState(null);
+    const [loadingVerdict, setLoadingVerdict] = useState(false);
+    const [verdictError, setVerdictError] = useState("");
+
     useEffect(() => {
         loadHospitals();
     }, []);
@@ -108,6 +112,8 @@ function Compare() {
 
             setComparison(data);
 
+            fetchVerdict(selectedIds);
+
             setTimeout(() => {
                 document
                     .getElementById("comparison-results")
@@ -138,7 +144,34 @@ function Compare() {
     function clearComparison() {
         setSelectedIds([]);
         setComparison([]);
+        setVerdict(null);
+        setVerdictError("");
         setError("");
+    }
+
+    async function fetchVerdict(hospitalIds) {
+        try {
+            setLoadingVerdict(true);
+            setVerdictError("");
+            setVerdict(null);
+
+            const response = await api.post(
+                "/compare/ai-verdict",
+                { hospitalIds },
+                { timeout: 90000 }
+            );
+
+            setVerdict(response.data || null);
+        } catch (err) {
+            console.error("AI verdict failed:", err);
+
+            setVerdictError(
+                err.response?.data?.message ||
+                    "AI verdict is unavailable right now — the table below still has everything you need."
+            );
+        } finally {
+            setLoadingVerdict(false);
+        }
     }
 
     const filteredHospitals = useMemo(() => {
@@ -496,6 +529,111 @@ function ComparisonTable({ hospitals }) {
                 </h2>
             </div>
 
+            {/* =================================================
+                AI RECOMMENDATION VERDICT
+            ================================================= */}
+
+            {loadingVerdict && (
+                <div className="mb-6 overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-white p-6 shadow-sm sm:p-8">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500 text-xl text-white">
+                            ✨
+                        </div>
+
+                        <div className="flex-1">
+                            <div className="h-4 w-48 animate-pulse rounded-full bg-brand-100" />
+                            <div className="mt-2 h-3 w-72 animate-pulse rounded-full bg-ink-100" />
+                        </div>
+                    </div>
+
+                    <p className="mt-4 text-sm text-ink-500">
+                        AI is weighing prices, ratings and patient
+                        reviews across your selection...
+                    </p>
+                </div>
+            )}
+
+            {!loadingVerdict && verdictError && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+                    {verdictError}
+                </div>
+            )}
+
+            {!loadingVerdict && verdict && (
+                <div className="mb-6 overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-white shadow-sm">
+                    <div className="p-6 sm:p-8">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500 text-xl text-white shadow-sm">
+                                ✨
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold uppercase tracking-wider text-brand-600">
+                                    AI Recommendation
+                                </p>
+
+                                <h3 className="mt-1 text-xl font-extrabold tracking-tight text-ink-900 sm:text-2xl">
+                                    {verdict.winnerHospitalName}
+                                </h3>
+
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    {verdict.scores?.map((entry) => (
+                                        <span
+                                            key={
+                                                entry.hospitalId
+                                            }
+                                            className={`rounded-full px-3 py-1 text-xs font-bold ${
+                                                entry.hospitalId ===
+                                                verdict.winnerHospitalId
+                                                    ? "bg-brand-500 text-white"
+                                                    : "bg-white text-ink-600 ring-1 ring-ink-200"
+                                            }`}
+                                        >
+                                            {entry.score?.toFixed(
+                                                1
+                                            )}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                <div className="mt-4 space-y-2">
+                                    {verdict.winnerReasons?.map(
+                                        (reason, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-start gap-2.5"
+                                            >
+                                                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
+                                                    ✓
+                                                </span>
+
+                                                <p className="text-sm leading-6 text-ink-700">
+                                                    {reason}
+                                                </p>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {verdict.explanation && (
+                            <div className="mt-6 rounded-2xl border border-brand-100 bg-white/80 p-5">
+                                <p className="text-xs font-bold uppercase tracking-wider text-brand-600">
+                                    {verdict.aiAvailable
+                                        ? "AI analysis"
+                                        : "Ranking summary"}
+                                </p>
+
+                                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-ink-700">
+                                    {verdict.explanation}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="overflow-x-auto rounded-2xl border border-ink-200 bg-white shadow-sm">
                 <table className="min-w-[900px] w-full border-collapse">
                     <thead>
@@ -562,27 +700,16 @@ function ComparisonTable({ hospitals }) {
 
                     <tbody>
                         <ComparisonRow
-                            label="MediCompare rating"
+                            label="Rating"
                             hospitals={hospitals}
                             render={(hospital) =>
-                                hospital.rating != null
-                                    ? `★ ${Number(
-                                          hospital.rating
-                                      ).toFixed(1)}`
-                                    : "—"
+                                hospital.reviewAverage != null
+                                    ? `★ ${Number(hospital.reviewAverage).toFixed(1)} · ${hospital.reviewCount} patient review${hospital.reviewCount === 1 ? "" : "s"}`
+                                    : hospital.rating != null
+                                        ? `★ ${Number(hospital.rating).toFixed(1)} · MediCompare rating`
+                                        : "—"
                             }
                         />
-                        <ComparisonRow
-    label="Patient rating"
-    hospitals={hospitals}
-    render={(hospital) =>
-        hospital.reviewAverage != null
-            ? `★ ${Number(hospital.reviewAverage).toFixed(1)} (${hospital.reviewCount} patient review${hospital.reviewCount === 1 ? "" : "s"})`
-            : hospital.rating != null
-                ? `★ ${Number(hospital.rating).toFixed(1)} (MediCompare rating)`
-                : "—"
-    }
-/>
 
                         <ComparisonRow
                             label="Consultation fee"
@@ -647,6 +774,20 @@ function ComparisonTable({ hospitals }) {
                                           )
                                         : null;
 
+                                /*
+                                 * "Best price" only for a UNIQUE minimum.
+                                 * Tied prices show no badge — cleaner and
+                                 * avoids stamping every column.
+                                 */
+                                const cheapestCount =
+                                    lowestPrice !== null
+                                        ? prices.filter(
+                                              (price) =>
+                                                  price ===
+                                                  lowestPrice
+                                          ).length
+                                        : 0;
+
                                 return (
                                     <tr
                                         key={
@@ -699,6 +840,8 @@ function ComparisonTable({ hospitals }) {
                                                         null &&
                                                     lowestPrice !==
                                                         null &&
+                                                    cheapestCount ===
+                                                        1 &&
                                                     price ===
                                                         lowestPrice;
 
