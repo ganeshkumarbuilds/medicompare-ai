@@ -51,6 +51,14 @@ function Booking() {
     const [booking, setBooking] =
         useState(false);
 
+    /*
+     * Frozen snapshot of the last successful booking.
+     * The summary keeps showing these booked values instead of
+     * flipping back to "Not selected" when the form resets.
+     */
+    const [confirmedBooking, setConfirmedBooking] =
+        useState(null);
+
     const [message, setMessage] =
         useState("");
 
@@ -347,6 +355,7 @@ function Booking() {
          */
         setMessage("");
         setError("");
+        setConfirmedBooking(null);
 
     }
 
@@ -371,6 +380,7 @@ function Booking() {
 
         setMessage("");
         setError("");
+        setConfirmedBooking(null);
 
     }
 
@@ -394,6 +404,7 @@ function Booking() {
 
         setMessage("");
         setError("");
+        setConfirmedBooking(null);
 
     }
 
@@ -419,6 +430,7 @@ function Booking() {
 
         setMessage("");
         setError("");
+        setConfirmedBooking(null);
 
     }
 
@@ -517,6 +529,42 @@ function Booking() {
             );
 
 
+            /*
+             * Freeze the booked values for the summary BEFORE
+             * resetting the form — otherwise the summary flips
+             * to "Not selected" right after a successful booking.
+             */
+            const bookedHospital =
+                hospitals.find(
+                    hospital =>
+                        String(hospital.id) ===
+                        String(selectedHospitalId)
+                );
+
+            const bookedService =
+                services.find(
+                    service =>
+                        String(service.id) ===
+                        String(selectedServiceId)
+                );
+
+            setConfirmedBooking({
+                id: bookingData.id,
+                hospitalName: bookedHospital?.name || "",
+                city:
+                    bookedHospital?.city ||
+                    bookedHospital?.address ||
+                    "",
+                serviceName: bookedService?.name || "",
+                price: bookedService?.price ?? null,
+                date: appointmentDate,
+                time: appointmentTime,
+            });
+
+
+            setSelectedHospitalId("");
+            setSelectedServiceId("");
+            setServices([]);
             setAppointmentDate("");
             setAppointmentTime("");
             setAvailableSlots([]);
@@ -1034,6 +1082,36 @@ function Booking() {
 
                                     </div>
 
+                                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                navigate(
+                                                    "/bookings"
+                                                )
+                                            }
+                                            className="flex-1 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-green-800"
+                                        >
+                                            View my bookings →
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMessage("");
+                                                setError("");
+                                                setConfirmedBooking(
+                                                    null
+                                                );
+                                            }}
+                                            className="flex-1 rounded-xl border border-green-300 bg-white px-4 py-2.5 text-sm font-bold text-green-800 transition hover:bg-green-100"
+                                        >
+                                            Book another
+                                        </button>
+
+                                    </div>
+
                                 </div>
 
                             )}
@@ -1077,7 +1155,9 @@ function Booking() {
                             </p>
 
                             <h2 className="mt-1 text-xl font-bold text-ink-900">
-                                Your appointment
+                                {confirmedBooking
+                                    ? `Booked ✓ #${confirmedBooking.id}`
+                                    : "Your appointment"}
                             </h2>
 
                         </div>
@@ -1090,8 +1170,12 @@ function Booking() {
 
                             <SummaryItem
                                 label="Hospital"
-                                active={Boolean(selectedHospital)}
+                                active={Boolean(
+                                    confirmedBooking?.hospitalName ||
+                                    selectedHospital
+                                )}
                                 value={
+                                    confirmedBooking?.hospitalName ||
                                     selectedHospital?.name ||
                                     "Not selected"
                                 }
@@ -1102,7 +1186,12 @@ function Booking() {
 
                             <SummaryItem
                                 label="Location"
+                                active={Boolean(
+                                    confirmedBooking?.city ||
+                                    selectedHospital
+                                )}
                                 value={
+                                    confirmedBooking?.city ||
                                     selectedHospital?.city ||
                                     selectedHospital?.address ||
                                     "Not selected"
@@ -1114,8 +1203,12 @@ function Booking() {
 
                             <SummaryItem
                                 label="Service"
-                                active={Boolean(selectedService)}
+                                active={Boolean(
+                                    confirmedBooking?.serviceName ||
+                                    selectedService
+                                )}
                                 value={
+                                    confirmedBooking?.serviceName ||
                                     selectedService?.name ||
                                     "Not selected"
                                 }
@@ -1126,10 +1219,16 @@ function Booking() {
 
                             <SummaryItem
                                 label="Service price"
-                                value={
+                                active={Boolean(
+                                    confirmedBooking?.price != null ||
                                     selectedService?.price != null
+                                )}
+                                value={
+                                    (confirmedBooking?.price ??
+                                        selectedService?.price) != null
                                         ? `₹${Number(
-                                              selectedService.price
+                                              confirmedBooking?.price ??
+                                                  selectedService.price
                                           ).toLocaleString(
                                               "en-IN"
                                           )}`
@@ -1142,11 +1241,16 @@ function Booking() {
 
                             <SummaryItem
                                 label="Date"
-                                active={Boolean(appointmentDate)}
+                                active={Boolean(
+                                    confirmedBooking?.date ||
+                                    appointmentDate
+                                )}
                                 value={
+                                    confirmedBooking?.date ||
                                     appointmentDate
                                         ? formatDate(
-                                              appointmentDate
+                                              confirmedBooking?.date ||
+                                                  appointmentDate
                                           )
                                         : "Not selected"
                                 }
@@ -1157,11 +1261,16 @@ function Booking() {
 
                             <SummaryItem
                                 label="Time"
-                                active={Boolean(appointmentTime)}
+                                active={Boolean(
+                                    confirmedBooking?.time ||
+                                    appointmentTime
+                                )}
                                 value={
+                                    confirmedBooking?.time ||
                                     appointmentTime
                                         ? formatTime(
-                                              appointmentTime
+                                              confirmedBooking?.time ||
+                                                  appointmentTime
                                           )
                                         : "Not selected"
                                 }
