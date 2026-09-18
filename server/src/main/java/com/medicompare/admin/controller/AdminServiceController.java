@@ -4,12 +4,14 @@ import com.medicompare.entity.Hospital;
 import com.medicompare.repository.HospitalRepository;
 import com.medicompare.serviceentity.HospitalService;
 import com.medicompare.serviceentity.HospitalServiceRepository;
+import com.medicompare.serviceentity.HospitalServiceResponse;
 
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,7 +39,8 @@ public class AdminServiceController {
     // =========================================================
 
     @GetMapping
-    public ResponseEntity<List<HospitalService>> getServices(
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<HospitalServiceResponse>> getServices(
             @PathVariable Long hospitalId
     ) {
 
@@ -45,8 +48,11 @@ public class AdminServiceController {
             return ResponseEntity.notFound().build();
         }
 
-        List<HospitalService> services =
-                serviceRepository.findByHospitalId(hospitalId);
+        List<HospitalServiceResponse> services =
+                serviceRepository.findByHospitalId(hospitalId)
+                        .stream()
+                        .map(HospitalServiceResponse::from)
+                        .toList();
 
         return ResponseEntity.ok(services);
     }
@@ -56,7 +62,8 @@ public class AdminServiceController {
     // =========================================================
 
     @GetMapping("/{serviceId}")
-    public ResponseEntity<HospitalService> getService(
+    @Transactional(readOnly = true)
+    public ResponseEntity<HospitalServiceResponse> getService(
             @PathVariable Long hospitalId,
             @PathVariable Long serviceId
     ) {
@@ -68,19 +75,20 @@ public class AdminServiceController {
             return ResponseEntity.notFound().build();
         }
 
-        if (
-                service.getHospital() == null
-                        ||
-                service.getHospital().getId() == null
-                        ||
-                !service.getHospital()
-                        .getId()
-                        .equals(hospitalId)
-        ) {
+        Long serviceHospitalId = null;
+        try {
+            serviceHospitalId = service.getHospital() != null
+                    ? service.getHospital().getId()
+                    : null;
+        } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(service);
+        if (serviceHospitalId == null || !serviceHospitalId.equals(hospitalId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(HospitalServiceResponse.from(service));
     }
 
     // =========================================================
@@ -103,6 +111,12 @@ public class AdminServiceController {
                             "Hospital not found with id: "
                                     + hospitalId
                     );
+        }
+
+        if (service.getName() == null || service.getName().trim().isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Service name is required.");
         }
 
         String serviceName =
@@ -147,7 +161,7 @@ public class AdminServiceController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedService);
+                .body(HospitalServiceResponse.from(savedService));
     }
 
     // =========================================================
@@ -186,6 +200,12 @@ public class AdminServiceController {
                         .equals(hospitalId)
         ) {
             return ResponseEntity.notFound().build();
+        }
+
+        if (updatedService.getName() == null || updatedService.getName().trim().isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Service name is required.");
         }
 
         String serviceName =
@@ -253,7 +273,7 @@ public class AdminServiceController {
         HospitalService savedService =
                 serviceRepository.save(existingService);
 
-        return ResponseEntity.ok(savedService);
+        return ResponseEntity.ok(HospitalServiceResponse.from(savedService));
     }
 
     // =========================================================

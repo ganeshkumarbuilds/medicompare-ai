@@ -112,11 +112,21 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request) {
 
+        // Log full cause to Render logs so 500s are diagnosable permanently
+        System.err.println("[500] " + request.getMethod() + " " + request.getRequestURI()
+                + " -> " + exception.getClass().getName() + ": " + exception.getMessage());
+        exception.printStackTrace(System.err);
+
+        String detail = exception.getMessage();
+        String message = "An unexpected error occurred"
+                + (detail != null && !detail.isBlank() && detail.length() < 300
+                        ? ": " + detail
+                        : "");
+
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred",
-                request.getRequestURI()
-        );
+                message,
+                request.getRequestURI());
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(

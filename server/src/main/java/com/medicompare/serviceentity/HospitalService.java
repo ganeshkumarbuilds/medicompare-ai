@@ -1,5 +1,6 @@
 package com.medicompare.serviceentity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.medicompare.entity.Hospital;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
@@ -34,6 +35,8 @@ public class HospitalService {
             name = "hospital_id",
             nullable = false
     )
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Hospital hospital;
 
     // =========================

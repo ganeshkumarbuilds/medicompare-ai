@@ -111,9 +111,30 @@ function AdminServices() {
                 err
             );
 
-            setError(
-                "Unable to load services."
-            );
+            const status = err.response?.status;
+            const backendMessage =
+                err.response?.data?.message ||
+                (typeof err.response?.data === "string"
+                    ? err.response.data
+                    : null);
+
+            if (status === 401 || status === 403) {
+                setError(
+                    "Admin session expired. Please log in again."
+                );
+            } else if (status === 404) {
+                setError(
+                    "Hospital not found."
+                );
+            } else {
+                setError(
+                    backendMessage
+                        ? `Unable to load services (${status || "network"}): ${backendMessage}`
+                        : `Unable to load services (${status || "network error"}). Please press Retry.`
+                );
+            }
+
+            setServices([]);
 
         } finally {
 

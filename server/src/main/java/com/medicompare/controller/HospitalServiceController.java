@@ -2,7 +2,9 @@ package com.medicompare.controller;
 
 import com.medicompare.repository.HospitalRepository;
 import com.medicompare.serviceentity.HospitalServiceRepository;
+import com.medicompare.serviceentity.HospitalServiceResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ public class HospitalServiceController {
     }
 
     @GetMapping("/{hospitalId}/services")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getHospitalServices(
             @PathVariable Long hospitalId
     ) {
@@ -31,10 +34,14 @@ public class HospitalServiceController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(
+        List<HospitalServiceResponse> services =
                 hospitalServiceRepository.findAvailableByHospitalId(
                         hospitalId
                 )
-        );
+                        .stream()
+                        .map(HospitalServiceResponse::from)
+                        .toList();
+
+        return ResponseEntity.ok(services);
     }
 }

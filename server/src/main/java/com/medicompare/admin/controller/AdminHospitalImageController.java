@@ -4,10 +4,12 @@ import com.medicompare.entity.Hospital;
 import com.medicompare.repository.HospitalRepository;
 import com.medicompare.image.HospitalImage;
 import com.medicompare.image.HospitalImageRepository;
+import com.medicompare.image.HospitalImageResponse;
 import com.medicompare.service.FileStorageService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,7 +41,8 @@ public class AdminHospitalImageController {
     // =========================================================
 
     @GetMapping
-    public ResponseEntity<List<HospitalImage>> getImages(
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<HospitalImageResponse>> getImages(
             @PathVariable Long hospitalId
     ) {
 
@@ -49,7 +52,9 @@ public class AdminHospitalImageController {
 
         return ResponseEntity.ok(
                 imageRepository.findByHospitalId(hospitalId)
-        );
+                        .stream()
+                        .map(HospitalImageResponse::from)
+                        .toList());
     }
 
 
@@ -173,7 +178,7 @@ public class AdminHospitalImageController {
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(savedImage);
+                    .body(HospitalImageResponse.from(savedImage));
 
 
         } catch (IllegalArgumentException exception) {
@@ -264,8 +269,7 @@ public class AdminHospitalImageController {
 
 
         return ResponseEntity.ok(
-                selectedImage
-        );
+                HospitalImageResponse.from(selectedImage));
     }
 
 
@@ -359,8 +363,7 @@ public class AdminHospitalImageController {
 
 
         return ResponseEntity.ok(
-                existingImage
-        );
+                HospitalImageResponse.from(existingImage));
     }
 
 

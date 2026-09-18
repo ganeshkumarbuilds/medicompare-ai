@@ -1,5 +1,7 @@
 package com.medicompare.image;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.medicompare.entity.Hospital;
 import jakarta.persistence.*;
 
@@ -13,6 +15,8 @@ public class HospitalImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hospital_id", nullable = false)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnore
     private Hospital hospital;
 
     @Column(nullable = false, length = 2000)
