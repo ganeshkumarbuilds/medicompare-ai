@@ -562,7 +562,7 @@ function ComparisonTable({ hospitals }) {
 
                     <tbody>
                         <ComparisonRow
-                            label="Rating"
+                            label="MediCompare rating"
                             hospitals={hospitals}
                             render={(hospital) =>
                                 hospital.rating != null
@@ -577,8 +577,10 @@ function ComparisonTable({ hospitals }) {
     hospitals={hospitals}
     render={(hospital) =>
         hospital.reviewAverage != null
-            ? `★ ${Number(hospital.reviewAverage).toFixed(1)} (${hospital.reviewCount} review${hospital.reviewCount === 1 ? "" : "s"})`
-            : "No reviews yet"
+            ? `★ ${Number(hospital.reviewAverage).toFixed(1)} (${hospital.reviewCount} patient review${hospital.reviewCount === 1 ? "" : "s"})`
+            : hospital.rating != null
+                ? `★ ${Number(hospital.rating).toFixed(1)} (MediCompare rating)`
+                : "—"
     }
 />
 

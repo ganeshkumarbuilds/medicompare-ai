@@ -527,6 +527,21 @@ function HospitalDetails() {
             : null;
 
 
+    /*
+     * In-app rating, always visible:
+     * live patient-review average when real user reviews exist,
+     * otherwise the hospital's MediCompare platform rating.
+     * The label always says which one is shown — never mixed.
+     */
+    const hasPatientReviews =
+        (reviewSummary?.totalReviews ?? 0) > 0 &&
+        reviewSummary?.averageRating != null;
+
+    const displayedRating = hasPatientReviews
+        ? Number(reviewSummary.averageRating)
+        : rating;
+
+
     const consultationFee =
         hospital.consultationFee != null
             ? Number(hospital.consultationFee)
@@ -557,32 +572,6 @@ const displayImage =
             ? rawDisplayImage
             : `${API_URL}${rawDisplayImage}`
         : null;
-
-
-/*
- * Genuine third-party reviews, always live:
- * opens this exact hospital's Google Maps listing where real
- * Google ratings and patient reviews can be read and compared.
- * No Google content is copied — users read it on Google itself.
- */
-const googleReviewsUrl = (() => {
-
-    const parts = [
-        hospital?.name,
-        hospital?.city,
-        hospital?.state,
-    ].filter(Boolean);
-
-    if (parts.length === 0) {
-        return null;
-    }
-
-    return (
-        "https://www.google.com/maps/search/?api=1&query=" +
-        encodeURIComponent(parts.join(", "))
-    );
-
-})();
 
 
     return (
@@ -948,20 +937,6 @@ const googleReviewsUrl = (() => {
                                 experience with this hospital.
                             </p>
 
-                            {googleReviewsUrl && (
-                                <a
-                                    href={googleReviewsUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-200 bg-white px-4 py-2 text-xs font-bold text-ink-700 shadow-sm transition hover:border-brand-300 hover:text-brand-700"
-                                >
-                                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-black text-white">
-                                        G
-                                    </span>
-                                    Read Google reviews ↗
-                                </a>
-                            )}
-
                         </div>
 
 
@@ -975,30 +950,32 @@ const googleReviewsUrl = (() => {
                         <div className="rounded-2xl border border-ink-200 bg-white p-7 text-center shadow-sm">
 
                             <p className="text-sm font-semibold text-ink-500">
-                                Patient rating
+                                {hasPatientReviews
+                                    ? "Patient rating"
+                                    : "MediCompare rating"}
                             </p>
 
                             <div className="mt-4 text-5xl font-bold text-ink-900">
-                                {reviewSummary?.averageRating
-                                    ? reviewSummary.averageRating.toFixed(1)
+                                {displayedRating != null
+                                    ? displayedRating.toFixed(1)
                                     : "—"}
                             </div>
 
                             <div className="mt-3 text-xl tracking-widest text-amber-500">
                                 {"★".repeat(
-                                    Math.round(reviewSummary?.averageRating || 0)
+                                    Math.round(displayedRating || 0)
                                 )}
                                 {"☆".repeat(
-                                    5 - Math.round(reviewSummary?.averageRating || 0)
+                                    5 - Math.round(displayedRating || 0)
                                 )}
                             </div>
 
                             <p className="mt-3 text-xs text-ink-400">
-                                {reviewSummary?.totalReviews
-                                    ? `Based on ${reviewSummary.totalReviews} review${
+                                {hasPatientReviews
+                                    ? `Based on ${reviewSummary.totalReviews} patient review${
                                           reviewSummary.totalReviews === 1 ? "" : "s"
                                       }`
-                                    : "No reviews yet"}
+                                    : "Platform rating · patient reviews pending"}
                             </p>
 
 
@@ -1162,25 +1139,10 @@ const googleReviewsUrl = (() => {
                                     </div>
 
                                     <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-ink-500">
-                                        No MediCompare patient reviews yet.
-                                        Be the first to share your experience
-                                        — or check real Google ratings below
-                                        while comparing.
+                                        No patient reviews yet. Be the first
+                                        to share your experience and help
+                                        others compare.
                                     </p>
-
-                                    {googleReviewsUrl && (
-                                        <a
-                                            href={googleReviewsUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-ink-900 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-500"
-                                        >
-                                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-black text-white">
-                                                G
-                                            </span>
-                                            Compare on Google reviews ↗
-                                        </a>
-                                    )}
 
                                 </div>
 
