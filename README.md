@@ -189,17 +189,17 @@ Production: set `VITE_API_URL=https://medicompare-ai.onrender.com` in Vercel, an
 
 ---
 
-## Demo accounts
+## Demo Access
 
-Seeded automatically on first backend start (`AdminDataInitializer`):
+Users can register through the application's registration page
+to explore the available patient-facing features.
 
-```text
-Admin — email: admin@medicompare.com / password: admin123
-```
+Administrative access is restricted to authorized administrators.
 
-Patients self-register at `/register`. Reviews require a signed-in user account (one review per user per hospital).
+For a demonstration of administrative functionality, contact the
+project maintainer to arrange appropriate access.
 
----
+No production credentials are published in this repository.
 
 ## Project structure
 
