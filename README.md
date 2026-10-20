@@ -79,22 +79,17 @@ Supporting capabilities: JWT auth (user + admin), favourites, history, profile, 
 
 ## Screenshots
 
-Main workflows only. Placeholder graphics render until replaced with real captures — save real screenshots as `docs/screenshots/dashboard.png`, `compare.png`, and `bookings.png`, then update the paths below.
+### Dashboard
 
-| Admin dashboard (`/admin`) | Hospital comparison (`/compare`) | Bookings (`/bookings`, `/admin/bookings`) |
-| --- | --- | --- |
-| ![Admin dashboard](docs/screenshots/dashboard.svg) | ![Hospital comparison](docs/screenshots/compare.svg) | ![Bookings](docs/screenshots/bookings.svg) |
-| Totals, management cards, and quick actions. | Winner, 0–100 scores, reasons, and AI explanation. | Status tracking and admin approval workflow. |
+![MediCompare dashboard](docs/screenshots/dashboard.png)
 
-To use real screenshots:
+### Hospital Comparison
 
-```text
-docs/screenshots/dashboard.png   # /admin
-docs/screenshots/compare.png     # /compare with AI verdict visible
-docs/screenshots/bookings.png    # /bookings or /admin/bookings
-```
+![Hospital comparison results](docs/screenshots/compare.png)
 
----
+### Appointment Bookings
+
+![Appointment booking and status tracking](docs/screenshots/bookings.png)
 
 ## Tech stack
 
